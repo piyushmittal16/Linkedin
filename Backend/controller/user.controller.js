@@ -6,7 +6,7 @@ const NotificationModel = require("../models/notification.js");
 
 const cookieOption = {
   httpOnly: true,
-  secure: false, // Set true if using HTTPS
+  secure: true, // Set true if using HTTPS
   sameSite: "Lax", // Use 'None' + secure: true for cross-origin
   maxAge: 7 * 24 * 60 * 60 * 1000, // 1 day
 };
