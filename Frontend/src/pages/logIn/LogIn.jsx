@@ -24,7 +24,7 @@ const LogIn = (props) => {
       return toast.error("Please fill all details..");
     }
     await axios
-      .post("http://localhost:4000/api/auth/login", loginField, {
+      .post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, loginField, {
         credentials: true,
       })
       .then((res) => {

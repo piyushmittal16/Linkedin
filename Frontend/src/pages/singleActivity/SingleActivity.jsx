@@ -16,7 +16,7 @@ const SingleActivity = () => {
   useEffect(() => {
     const fetchDataOnLoad = async () => {
       await axios
-        .get(`http://localhost:4000/api/post/getPost/${postId}`)
+        .get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getPost/${postId}`)
         .then((res) => {
           setPostData(res?.data?.post);
         })

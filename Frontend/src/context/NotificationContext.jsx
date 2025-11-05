@@ -15,9 +15,12 @@ export const NotificationProvider = ({ children }) => {
   }, [user]);
   const fetchNotificationCount = async () => {
     await axios
-      .get("http://localhost:4000/api/notification/activeNotification", {
-        withCredentials: true,
-      })
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/notification/activeNotification`,
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         setNotificationCount(res?.data?.count || 0);
       })
@@ -29,7 +32,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (notificationId) => {
     await axios
-      .put(`http://localhost:4000/api/notification/isRead`, {
+      .put(`${import.meta.env.VITE_BACKEND_URL}/api/notification/isRead`, {
         notificationId,
       })
       .then((res) => {

@@ -35,7 +35,7 @@ const Post = ({ profile, item, personalData }) => {
   const handleLikeFunction = async () => {
     try {
       await axios.post(
-        "http://localhost:4000/api/post/likeDislike",
+        `${import.meta.env.VITE_BACKEND_URL}/api/post/likeDislike`,
         { postId: item?._id },
         { withCredentials: true }
       );
@@ -61,7 +61,7 @@ const Post = ({ profile, item, personalData }) => {
     if (newState) {
       try {
         const resp = await axios.get(
-          `http://localhost:4000/api/comments/${item?._id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/comments/${item?._id}`,
           { withCredentials: true }
         );
         setComments(resp.data.comments);
@@ -80,7 +80,7 @@ const Post = ({ profile, item, personalData }) => {
 
     try {
       const res = await axios.post(
-        `http://localhost:4000/api/comments`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/comments`,
         { postId: item?._id, comment: commentText },
         { withCredentials: true }
       );
@@ -102,7 +102,9 @@ const Post = ({ profile, item, personalData }) => {
   // ✅ Copy post URL
   const copyToClipBoard = async () => {
     try {
-      let string = `http://localhost:5173/profile/${personalData?._id}/activities/${item?._id}`;
+      let string = `${import.meta.env.VITE_FRONTEND_URL}/profile/${
+        personalData?._id
+      }/activities/${item?._id}`;
       await navigator.clipboard.writeText(string);
       toast.success("URL copied successfully");
     } catch (error) {

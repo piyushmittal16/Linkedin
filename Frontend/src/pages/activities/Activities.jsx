@@ -13,7 +13,9 @@ const Activities = () => {
    const { user } = useContext(AuthContext);
   const fetchDataOnLoad = async () => {
     await axios
-      .get(`http://localhost:4000/api/post/getAllPostByUserId/${id}`)
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/post/getAllPostByUserId/${id}`
+      )
       .then((res) => {
         setPost(res?.data?.posts);
         console.log(res);

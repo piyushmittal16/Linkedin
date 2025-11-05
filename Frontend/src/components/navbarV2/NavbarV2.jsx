@@ -36,7 +36,9 @@ const NavbarV2 = () => {
   const searchAPICall = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:4000/api/auth/findUser?query=${debouncedTerm}`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/auth/findUser?query=${debouncedTerm}`,
         { withCredentials: true }
       );
       setSearchUser(res?.data?.users || []);

@@ -9,7 +9,7 @@ const GoogleLoginCompo = (props) => {
   const handleOnSuccess = async (credResponse) => {
     const token = credResponse.credential;
     const res = await axios.post(
-      "http://localhost:4000/api/auth/google",
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/google`,
       { token },
       { withCredentials: true }
     );

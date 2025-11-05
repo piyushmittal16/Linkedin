@@ -31,9 +31,9 @@ const Profile = () => {
   const fetchDataOnLoad = async () => {
     try {
       const [userDatas, postDatas, ownDatas] = await Promise.all([
-        axios.get(`http://localhost:4000/api/auth/user/${id}`),
-        axios.get(`http://localhost:4000/api/post/getTop5posts/${id}`),
-        axios.get(`http://localhost:4000/api/auth/self`, {
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/user/${id}`),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
           withCredentials: true,
         }),
       ]);
@@ -116,7 +116,7 @@ const Profile = () => {
   const handleEditFunc = async (data) => {
     await axios
       .put(
-        `http://localhost:4000/api/auth/update`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/update`,
         { user: data },
         { withCredentials: true }
       )
@@ -168,7 +168,7 @@ const Profile = () => {
     else if (checkFriendStatus() === "Connect") {
       await axios
         .post(
-          "http://localhost:4000/api/auth/sendfriendrequest",
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/sendfriendrequest`,
           { receiver: userData?._id },
           { withCredentials: true }
         )
@@ -185,7 +185,7 @@ const Profile = () => {
     } else if (checkFriendStatus() === "Accept Request") {
       await axios
         .post(
-          "http://localhost:4000/api/auth/acceptfriendrequest",
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/acceptfriendrequest`,
           { friendId: userData?._id },
           { withCredentials: true }
         )
@@ -202,7 +202,7 @@ const Profile = () => {
     } else if (checkFriendStatus() === "Disconnect") {
       await axios
         .delete(
-          `http://localhost:4000/api/auth/removefromfriendlist/${userData?._id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${userData?._id}`,
           { withCredentials: true }
         )
         .then((res) => {
@@ -220,7 +220,7 @@ const Profile = () => {
   //Handle Share Button
   const handleShareBtn = async () => {
     try {
-      let string = `http://localhost:5173/profile/${id}`;
+      let string = `${import.meta.env.VITE_FRONTEND_URL}/profile/${id}`;
       await navigator.clipboard.writeText(string);
       toast.success("Url Copied");
     } catch (error) {
@@ -231,7 +231,7 @@ const Profile = () => {
   //Handle Logout Button
   const handleLogoutBtn = async () => {
     await axios
-      .post("http://localhost:4000/api/auth/logout", {
+      .post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
         withCredentials: true,
       })
       .then((res) => {

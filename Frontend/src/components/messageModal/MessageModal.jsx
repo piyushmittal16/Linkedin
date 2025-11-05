@@ -7,7 +7,7 @@ const MessageModal = ({ selfData, userData }) => {
   const handleSendBtn = async () => {
     await axios
       .post(
-        "http://localhost:4000/api/conversation/add-conversation",
+        `${import.meta.env.VITE_BACKEND_URL}/api/conversation/add-conversation`,
         { receiverId: userData?._id, message },
         {
           withCredentials: true,

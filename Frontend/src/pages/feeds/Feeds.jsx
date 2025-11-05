@@ -19,10 +19,10 @@ const Feeds = () => {
   const fetchData = async () => {
     try {
       const [userData, postData] = await Promise.all([
-        axios.get("http://localhost:4000/api/auth/self", {
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
           withCredentials: true,
         }),
-        axios.get("http://localhost:4000/api/post/getallposts"),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getallposts`),
       ]);
       setPost(postData.data.posts);
     } catch (error) {

@@ -14,12 +14,18 @@ const AddModal = (props) => {
     if ((desc.trim().length === 0) & !imageUrl)
       return toast.error("Please Enter any field");
 
-    await axios.post('http://localhost:4000/api/post', { desc: desc, imageLink: imageUrl }, { withCredentials: true }).then((res => {
-      window.location.reload();
-    })).catch(err => {
-      console.log(err);
-      
-    })
+    await axios
+      .post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/post`,
+        { desc: desc, imageLink: imageUrl },
+        { withCredentials: true }
+      )
+      .then((res) => {
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const handleUploadImage = async (e) => {

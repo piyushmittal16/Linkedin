@@ -25,7 +25,10 @@ const SignUp = (props) => {
       return toast.error("Fill all Details");
     }
     await axios
-      .post("http://localhost:4000/api/auth/register", registerField)
+      .post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
+        registerField
+      )
       .then((res) => {
         toast.success("You have registered successfully");
         setRegisterField({

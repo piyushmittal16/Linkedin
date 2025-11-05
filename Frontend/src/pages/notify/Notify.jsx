@@ -21,7 +21,9 @@ const Notify = () => {
   }, []);
   const fetchNotificationData = async () => {
     await axios
-      .get(`http://localhost:4000/api/notification`, { withCredentials: true })
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/notification`, {
+        withCredentials: true,
+      })
       .then((res) => {
         console.log(res);
         setNotifications(res?.data?.notification);

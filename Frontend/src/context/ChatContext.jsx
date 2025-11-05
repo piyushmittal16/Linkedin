@@ -19,9 +19,12 @@ export const ChatProvider = ({ children }) => {
 
   const fetchConversations = async () => {
     await axios
-      .get("http://localhost:4000/api/conversation/get-conversation", {
-        withCredentials: true,
-      })
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/conversation/get-conversation`,
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         setConversations(res?.data?.conversations || []);
         // setActiveConId(res?.data?.conversations[0]?._id);
@@ -41,9 +44,12 @@ export const ChatProvider = ({ children }) => {
 
   const fetchMessages = async (conversationId) => {
     await axios
-      .get(`http://localhost:4000/api/message/${conversationId}`, {
-        withCredentials: true,
-      })
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/message/${conversationId}`,
+        {
+          withCredentials: true,
+        }
+      )
       .then((res) => {
         setMessages(res?.data?.message || []);
       })
@@ -55,7 +61,7 @@ export const ChatProvider = ({ children }) => {
   const sendMessage = async (conversationId, messageText, picture) => {
     await axios
       .post(
-        "http://localhost:4000/api/message",
+        `${import.meta.env.VITE_BACKEND_URL}/api/message`,
         {
           conversation: conversationId,
           message: messageText,

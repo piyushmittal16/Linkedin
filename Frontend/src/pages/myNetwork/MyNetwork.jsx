@@ -15,7 +15,7 @@ function MyNetwork() {
 
   const fetchFriendList = async () => {
     await axios
-      .get("http://localhost:4000/api/auth/friendlist", {
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/friendlist`, {
         withCredentials: true,
       })
       .then((res) => setData(res.data.friends))
@@ -24,7 +24,7 @@ function MyNetwork() {
 
   const fetchPendingFriendList = async () => {
     await axios
-      .get("http://localhost:4000/api/auth/pendingfriendlist", {
+      .get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/pendingfriendlist`, {
         withCredentials: true,
       })
       .then((res) => setData(res.data.pendingFriends))
