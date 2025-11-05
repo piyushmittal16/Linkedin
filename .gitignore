@@ -1,0 +1,12 @@
+# Ignore all node_modules folders
+node_modules/
+
+# Ignore all environment files (these have secrets!)
+.env
+Backend/.env
+Frontend/.env
+
+# Ignore other common .env files
+.env.local
+.env.development
+.env.production
