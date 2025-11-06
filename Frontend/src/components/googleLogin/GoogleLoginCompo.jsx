@@ -13,7 +13,6 @@ const GoogleLoginCompo = (props) => {
       { token },
       { withCredentials: true }
     );
-    // console.log(res);
     localStorage.setItem("isLogin", true);
     localStorage.setItem("userInfo", JSON.stringify(res.data.userExist));
 props.changeLoginValue(true)

@@ -25,7 +25,6 @@ const Notify = () => {
         withCredentials: true,
       })
       .then((res) => {
-        console.log(res);
         setNotifications(res?.data?.notification);
       })
       .catch((err) => {

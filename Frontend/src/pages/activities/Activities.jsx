@@ -18,7 +18,6 @@ const Activities = () => {
       )
       .then((res) => {
         setPost(res?.data?.posts);
-        console.log(res);
       })
       .catch((err) => {
         console.log(err);
