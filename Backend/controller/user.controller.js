@@ -101,6 +101,7 @@ exports.login = async (req, res) => {
         message: "Logged in Successfully",
         success: "yes",
         userExist,
+        token,
       });
     } else {
       return res.status(400).json({ error: "Something is wrong..." });
