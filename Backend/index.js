@@ -28,7 +28,7 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -61,7 +61,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true, // 🔥 Must have for cookies
   })
