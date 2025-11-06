@@ -13,12 +13,11 @@ const Post = ({ profile, item, personalData }) => {
   const [seeMore, setSeeMore] = useState(false);
   const [like, setLike] = useState(false);
   const [noOfLikes, setNoOfLikes] = useState(item?.likes?.length || 0);
-  const [noOfComments, setNoOfComments] = useState(item?.comments || 0); 
+  const [noOfComments, setNoOfComments] = useState(item?.comments || 0);
   const [comments, setComments] = useState([]);
   const [commentSection, setCommentSection] = useState(false);
   const [commentText, setCommentText] = useState("");
 
- 
   useEffect(() => {
     if (!item || !personalData?._id) return;
 
@@ -52,7 +51,6 @@ const Post = ({ profile, item, personalData }) => {
       toast.error("Something went wrong");
     }
   };
-
 
   const handleCommentBoxOpenClose = async () => {
     const newState = !commentSection;
@@ -91,7 +89,7 @@ const Post = ({ profile, item, personalData }) => {
       const newComment = res.data.comment;
       if (newComment) {
         setComments((prev) => [newComment, ...prev]);
-        setNoOfComments((prev) => prev + 1); 
+        setNoOfComments((prev) => prev + 1);
       }
     } catch (error) {
       console.error(error);

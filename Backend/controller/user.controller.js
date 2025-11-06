@@ -6,8 +6,8 @@ const NotificationModel = require("../models/notification.js");
 
 const cookieOption = {
   httpOnly: true,
-  secure: true, 
-  sameSite: "Lax", 
+  secure: false,
+  sameSite: "Lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 

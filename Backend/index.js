@@ -20,10 +20,10 @@ const MessageRoutes = require("./routes/message.js");
 const server = http.createServer(app);
 
 // ✅ Allowed origins (Render + localhost)
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://linkedin-frontend.vercel.app",
-];
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "https://linkedin-frontend.vercel.app",
+// ];
 
 // Initialize Socket.io
 const io = new Server(server, {
@@ -61,11 +61,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
+    credentials: true, // 🔥 Must have for cookies
   })
 );
+
 
 // Health check route (important for Render)
 app.get("/", (req, res) => {
