@@ -54,7 +54,6 @@ const Message = () => {
     }
   }, [activeConId]);
 
- 
   const handleInputImage = async (e) => {
     const files = e.target.files;
     const data = new FormData();
@@ -84,7 +83,6 @@ const Message = () => {
     setImageLink(null);
     toast.success("Message sent successfully");
   };
-  console.log(conversations);
 
   return (
     <div className="px-5 xl:px-50 py-9 flex gap-5 w-full mt-5 bg-gray-100">
