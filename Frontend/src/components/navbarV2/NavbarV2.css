@@ -1,6 +1,14 @@
-.searchInput{
-    transition: width 0.5s;
+.searchInput {
+  transition: width 0.5s;
 }
-.searchInput:focus{
-    width:350px
+
+.searchInput:focus {
+  width: 350px;
+}
+
+/* Mobile smooth animation */
+@media (max-width: 640px) {
+  .mobile-search {
+    transition: all 0.3s ease-in-out;
+  }
 }

@@ -6,6 +6,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import WorkIcon from "@mui/icons-material/Work";
 import MessageIcon from "@mui/icons-material/Message";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
@@ -19,6 +21,7 @@ const NavbarV2 = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const [searchUser, setSearchUser] = useState([]);
+  const [mobileSearchActive, setMobileSearchActive] = useState(false); // 🌟 NEW STATE
 
   // 🔁 Debounce search input
   useEffect(() => {
@@ -36,9 +39,7 @@ const NavbarV2 = () => {
   const searchAPICall = async () => {
     try {
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/auth/findUser?query=${debouncedTerm}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/findUser?query=${debouncedTerm}`,
         { withCredentials: true }
       );
       setSearchUser(res?.data?.users || []);
@@ -47,18 +48,25 @@ const NavbarV2 = () => {
     }
   };
 
+  const handleCloseSearch = () => {
+    setMobileSearchActive(false);
+    setSearchTerm("");
+    setSearchUser([]);
+  };
+
   return (
-    <div className="bg-white h-13 flex justify-between items-center py-1 px-4 xl:px-50 fixed  top-0 w-full shadow-sm z-50">
+    <div className="bg-white h-13 flex justify-between items-center py-1 px-4 xl:px-50 fixed top-0 w-full shadow-sm z-50 transition-all duration-300">
       {/* 🔹 Left: Logo + Search */}
       <div className="flex gap-2 items-center">
         <Link to="/feeds">
           <img src={logo} alt="LinkedIn" className="w-8 h-8" />
         </Link>
 
-        {/* Search Bar (hidden on small screens) */}
+        {/* Desktop Search */}
         <div className="relative hidden sm:block">
           <input
             onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
             type="text"
             className="searchInput w-70 bg-gray-100 rounded-sm h-10 px-4"
             placeholder="Search"
@@ -86,8 +94,11 @@ const NavbarV2 = () => {
       </div>
 
       {/* 🔹 Right: Navigation Icons */}
-      <div className="flex gap-6 sm:gap-10 items-center">
-        {/* ✅ Common Nav Item Component */}
+      <div
+        className={`flex gap-6 sm:gap-10 items-center transition-all duration-300 ${
+          mobileSearchActive ? "hidden sm:flex" : "flex"
+        }`}
+      >
         <NavItem
           to="/feeds"
           icon={<HomeIcon />}
@@ -113,7 +124,7 @@ const NavbarV2 = () => {
           active={location.pathname === "/message"}
         />
 
-        {/* 🔔 Notification Icon */}
+        {/* 🔔 Notification */}
         <Link
           to="/notification"
           className="relative flex flex-col items-center cursor-pointer"
@@ -146,7 +157,32 @@ const NavbarV2 = () => {
             alt="profile"
           />
         </Link>
+
+        {/* 🔍 Mobile Search Icon */}
+        <button
+          onClick={() => setMobileSearchActive(true)}
+          className="sm:hidden"
+        >
+          <SearchIcon />
+        </button>
       </div>
+
+      {/* 🔎 Mobile Search Mode */}
+      {mobileSearchActive && (
+        <div className="absolute left-0 top-0 w-full bg-white flex items-center px-3 py-2 shadow-md sm:hidden">
+          <input
+            autoFocus
+            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
+            type="text"
+            placeholder="Search users..."
+            className="flex-grow bg-gray-100 rounded-md px-4 py-2 focus:outline-none"
+          />
+          <button onClick={handleCloseSearch} className="ml-2">
+            <CloseIcon />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
