@@ -32,7 +32,9 @@ const Profile = () => {
     try {
       const [userDatas, postDatas, ownDatas] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/user/${id}`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`),
+        axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`
+        ),
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
           withCredentials: true,
         }),
@@ -202,7 +204,9 @@ const Profile = () => {
     } else if (checkFriendStatus() === "Disconnect") {
       await axios
         .delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${userData?._id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${
+            userData?._id
+          }`,
           { withCredentials: true }
         )
         .then((res) => {
@@ -213,7 +217,7 @@ const Profile = () => {
         })
         .catch((error) => {
           console.log(`user disconnect error : ${error}`);
-          toast.error(error?.response?.data?.error);
+          // toast.error(error?.response?.data?.error);
         });
     }
   };
