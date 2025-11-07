@@ -33,7 +33,7 @@ const LogIn = (props) => {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("userInfo", JSON.stringify(res.data.userExist));
         navigate("/feeds");
-        window.location.reload();
+        // window.location.reload();
       })
       .catch((err) => {
         console.log(err);
