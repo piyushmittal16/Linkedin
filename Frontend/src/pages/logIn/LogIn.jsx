@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import GoogleLoginCompo from "../../components/googleLogin/GoogleLoginCompo";
 //for Showing error when user submit form without fill inputs
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
@@ -45,14 +44,7 @@ const LogIn = (props) => {
     <div className="w-full flex flex-col items-center justify-center">
       <div className="w-[85%] md:w-[28%] shadow-xl rounded-sm box p-10">
         <div className="text-3xl">Sign In</div>
-        <div className="my-5">
-          <GoogleLoginCompo changeLoginValue={props.changeLoginValue} />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="border-b-1 border-gray-400 w-[45%]"></div>
-          or
-          <div className="border-b-1 border-gray-400 w-[45%] my-6"></div>
-        </div>
+
         <div className="flex flex-col gap-4">
           <div>
             <label htmlFor="email">Email</label>

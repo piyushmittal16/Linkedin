@@ -15,8 +15,8 @@ const GoogleLoginCompo = (props) => {
     );
     localStorage.setItem("isLogin", true);
     localStorage.setItem("userInfo", JSON.stringify(res.data.userExist));
-props.changeLoginValue(true)
-    navigate('/feeds')
+    props.changeLoginValue(true);
+    navigate("/feeds");
   };
 
   return (
@@ -26,7 +26,7 @@ props.changeLoginValue(true)
           handleOnSuccess(credentialResponse);
         }}
         onError={() => {
-          // console.log("Login Failed");
+          console.log("Login Failed");
         }}
       />
     </div>

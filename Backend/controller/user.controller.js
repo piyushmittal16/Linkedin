@@ -54,7 +54,7 @@ exports.loginThroughGmail = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     let { email, password, f_name } = req.body;
-    isUserExist = await User.findOne({ email });
+    const isUserExist = await User.findOne({ email });
     if (isUserExist) {
       return res
         .status(400)

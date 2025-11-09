@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import GoogleLoginCompo from "../../components/googleLogin/GoogleLoginCompo";
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 
@@ -88,14 +87,7 @@ const SignUp = (props) => {
             Register
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="border-b-1 border-gray-400 w-[45%]"></div>
-          or
-          <div className="border-b-1 border-gray-400 w-[45%] my-6"></div>
-        </div>
-        <div>
-          <GoogleLoginCompo changeLoginValue={props.changeLoginValue} />
-        </div>
+
       </div>
       <Link to={"/login"} className="mt-4 mb-10 ">
         Already on LinkedIn ? <span className="text-blue-800">Sign in</span>

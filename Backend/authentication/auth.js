@@ -7,11 +7,9 @@ exports.auth = async (req, res, next) => {
     const token = req.cookies.token;
 
     if (!token) {
-      return res
-        .status(401)
-        .json({
-          error: "No token, authorization is denied Login again Please",
-        });
+      return res.status(401).json({
+        error: "No token, authorization is denied Login again Please",
+      });
     }
 
     const decode = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -25,6 +23,6 @@ exports.auth = async (req, res, next) => {
     next();
   } catch (error) {
     console.error("❌ Auth Error:", error.message);
-    res.status(401).json({ error: "Token is Not Valid" });
+    res.status(401).json({ error: "Token is Not Valid,Please login again" });
   }
 };

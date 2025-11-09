@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import GoogleLoginCompo from "../../components/googleLogin/GoogleLoginCompo";
 
 // ✅ import the image as default
 import landingImage from "../../assets/landingImage.png";
@@ -13,12 +12,6 @@ const LandingPage = (props) => {
         <h1 className="text-3xl md:text-4xl font-semibold text-gray-700 leading-snug">
           Welcome To Your Professional Community
         </h1>
-
-        <div className="flex justify-center md:justify-start">
-          <div className="my-3 flex bg-white gap-2 rounded-3xl w-[80%] md:w-[70%] shadow-sm hover:shadow-md transition-all">
-            <GoogleLoginCompo changeLoginValue={props.changeLoginValue} />
-          </div>
-        </div>
 
         <Link
           to="/login"
