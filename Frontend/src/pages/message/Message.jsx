@@ -48,6 +48,18 @@ const Message = () => {
     }
   }, [user]);
 
+  // Auto-select first conversation if available and none selected yet
+  useEffect(() => {
+    if (conversations && conversations.length > 0 && !activeConId && user) {
+      const firstCon = conversations[0];
+      const otherUser = firstCon?.members?.find((m) => {
+        const mId = typeof m === "object" ? m?._id : m;
+        return mId !== user?._id;
+      });
+      handleSelectedCon(firstCon?._id, otherUser);
+    }
+  }, [conversations, user]);
+
   useEffect(() => {
     if (activeConId) {
       fetchMessages(activeConId);
@@ -78,10 +90,16 @@ const Message = () => {
   };
 
   const handleSendMessageBtn = () => {
+    if (!activeConId) {
+      toast.error("Please select a conversation first");
+      return;
+    }
+    if (!messageText.trim() && !imageLink) {
+      return;
+    }
     sendMessage(activeConId, messageText, imageLink);
     setMessageText("");
     setImageLink(null);
-    toast.success("Message sent successfully");
   };
 
   return (
@@ -107,8 +125,8 @@ const Message = () => {
                 <div className="h-[500px] overflow-auto w-full md:w-[40%] border-r-1 border-gray-400">
                   {/*For Each Chat */}
 
-                  {conversations
-                    ? conversations.map((item, index) => {
+                  {conversations && conversations.length > 0 ? (
+                    conversations.map((item, index) => {
                       return (
                         <Conversation
                           handleSelectedCon={handleSelectedCon}
@@ -119,37 +137,46 @@ const Message = () => {
                         />
                       );
                     })
-                    : "No Conversation S"}
+                  ) : (
+                    <div className="p-4 text-center text-gray-400 text-sm">
+                      No conversations yet
+                    </div>
+                  )}
                 </div>
 
                 {/*Left-Right-Side Section */}
 
                 <div className="w-full md:w-[60%] border-gray-400">
-                  <div className="border-gray-300 py-2 px-4 border-b-2 flex justify-between items-center">
-                    <Link
-                      to={`/profile/${selectedConDetails?._id}`}
-                      className="w-full border-b-1 border-gray-300 gap-3 p-4 flex flex-row"
-                    >
-                      {selectedConDetails?.profile_pic && (
+                  {selectedConDetails ? (
+                    <div className="border-gray-300 py-2 px-4 border-b-2 flex justify-between items-center">
+                      <Link
+                        to={`/profile/${selectedConDetails?._id}`}
+                        className="w-full gap-3 p-2 flex flex-row items-center hover:bg-gray-50 rounded"
+                      >
                         <img
                           src={selectedConDetails?.profile_pic}
-                          className="rounded-[100%] w-16 cursor-pointer h-15 "
+                          className="rounded-full w-14 h-14 cursor-pointer"
+                          alt="profile"
                         />
-                      )}
 
-                      <div className="my-2">
-                        <div className="text-md">
-                          {selectedConDetails?.f_name}
+                        <div className="my-1">
+                          <div className="text-md font-semibold text-gray-900">
+                            {selectedConDetails?.f_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {selectedConDetails?.headline || ""}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {selectedConDetails?.headline}
-                        </div>
+                      </Link>
+                      <div>
+                        <MoreHorizIcon />
                       </div>
-                    </Link>
-                    <div>
-                      <MoreHorizIcon />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-6 text-center text-gray-400 border-b-2 border-gray-200">
+                      Select a conversation to start messaging
+                    </div>
+                  )}
 
                   <div className="h-[360px] w-full overflow-auto border-b-1 border-gray-300">
                     <div className="w-full">

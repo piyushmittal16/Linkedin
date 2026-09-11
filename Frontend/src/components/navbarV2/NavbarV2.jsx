@@ -146,9 +146,8 @@ const NavbarV2 = () => {
           </span>
         </Link>
 
-        {/* 👤 Profile */}
         <Link
-          to={`/profile/${user?._id}`}
+          to={user?._id ? `/profile/${user._id}` : "#"}
           className="flex flex-col items-center cursor-pointer"
         >
           <img

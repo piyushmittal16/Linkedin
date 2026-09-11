@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Advertisement from "../../components/advertisment/Advertisement";
-import { useParams } from "react-router-dom";
 import Card from "../../components/card/Card";
 import EditIcon from "@mui/icons-material/Edit";
 import Post from "../../components/post/Post";
@@ -15,149 +14,135 @@ import ArrowRightAltSharpIcon from "@mui/icons-material/ArrowRightAltSharp";
 import MessageModal from "../../components/messageModal/MessageModal";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
-// import { AuthContext } from "../../context/AuthContext";
+
 const Profile = () => {
-  //Calling All Activity Id
   const { id } = useParams();
-  // const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const [userData, setUserData] = useState(null);
   const [postData, setPostData] = useState([]);
   const [ownData, setOwnData] = useState(null);
-  const navigate = useNavigate();
+
+  // Modals state
+  const [imageModal, setImageModal] = useState(false);
+  const [circular, setCircular] = useState(true);
+  const [infoModal, setInfoModal] = useState(false);
+  const [aboutModal, setAboutModal] = useState(false);
+  const [experienceModal, setExperienceModal] = useState(false);
+  const [messageModal, setMessageModal] = useState(false);
+
+  const [updateExperience, setUpdateExperience] = useState({
+    clicked: false,
+    id: "",
+    data: {},
+  });
+
+  // Profile data fetch karna
   useEffect(() => {
-    fetchDataOnLoad();
+    if (id && id !== "undefined") {
+      fetchDataOnLoad();
+    }
   }, [id]);
 
   const fetchDataOnLoad = async () => {
     try {
       const [userDatas, postDatas, ownDatas] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/user/${id}`),
-        axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`
-        ),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`),
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
           withCredentials: true,
         }),
       ]);
-      setUserData(userDatas.data.user);
-      setPostData(postDatas.data.posts);
-      setOwnData(ownDatas.data.user);
 
-      localStorage.setItem("userInfo", JSON.stringify(ownDatas.data.user));
+      setUserData(userDatas?.data?.user || null);
+      setPostData(postDatas?.data?.posts || []);
+      setOwnData(ownDatas?.data?.user || null);
+
+      if (ownDatas?.data?.user) {
+        localStorage.setItem("userInfo", JSON.stringify(ownDatas.data.user));
+      }
     } catch (error) {
-      console.log(error);
-      alert("Something Went wrong");
+      console.log("Error loading profile:", error);
     }
   };
 
-  const [updateExperience, setUpdateExperience] = useState({
-    clicked: "",
-    id: "",
-    data: {},
-  });
-  const updateExperienceEdit = (id, data) => {
-    setUpdateExperience({
-      ...updateExperience,
-      clicked: true,
-      id: id,
-      data: data,
-    });
-    setExperienceModal((prev) => !prev);
-  };
-
-  //Calling All Activity Id
-  //   const { postId } = useParams();
-
-  //for overall
-  const [imageModal, setImageModal] = useState(false);
   const handleImageModalOpenClose = () => {
     setImageModal((prev) => !prev);
   };
-  //---------------------------------------------------
-  //For Cover & Profile image Modal
-  const [circular, setCircular] = useState(true);
-  //for Cover Image
+
   const handleEditCoverModal = () => {
     setImageModal(true);
     setCircular(false);
   };
-  //for Profile Image
+
   const handleCircularCoverModal = () => {
     setImageModal(true);
     setCircular(true);
   };
-  //---------------------------------------------------
-  //For Profile About Modal
-  const [infoModal, setInfoModal] = useState(false);
-  //for Profile About Image
+
   const handleInfoModal = () => {
     setInfoModal((prev) => !prev);
   };
-  //---------------------------------------------------
-  //For About Modal
-  const [aboutModal, setAboutModal] = useState(false);
+
   const handleAboutModal = () => {
     setAboutModal((prev) => !prev);
   };
 
-  //For Experience Modal
-  const [experienceModal, setExperienceModal] = useState(false);
   const handleExperienceModal = () => {
     if (experienceModal) {
-      setUpdateExperience({ clicked: "" });
+      setUpdateExperience({ clicked: false, id: "", data: {} });
     }
     setExperienceModal((prev) => !prev);
   };
 
-  //For Message Modal
-  const [messageModal, setMessageModal] = useState(false);
+  const updateExperienceEdit = (id, data) => {
+    setUpdateExperience({
+      clicked: true,
+      id: id,
+      data: data,
+    });
+    setExperienceModal(true);
+  };
+
   const handleMessageModal = () => {
     setMessageModal((prev) => !prev);
   };
 
   const handleEditFunc = async (data) => {
-    await axios
-      .put(
+    try {
+      await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/update`,
         { user: data },
         { withCredentials: true }
-      )
-      .then((res) => {
-        window.location.reload();
-      })
-      .catch((err) => {
-        console.log(err);
-        alert("Something Went Wrong");
-      });
+      );
+      window.location.reload();
+    } catch (err) {
+      console.log(err);
+      toast.error("Update failed");
+    }
   };
 
-  //for check we are friends or not
+  // Friend status check functions
   const myFriend = () => {
-    let arr = userData?.friends?.filter((item) => {
-      return item === ownData?._id;
-    });
-    return arr?.length;
+    let arr = userData?.friends?.filter((item) => item === ownData?._id);
+    return arr?.length > 0;
   };
 
   const userPendingListFriend = () => {
-    let arr = userData?.pending_friends?.filter((item) => {
-      return item === ownData?._id;
-    });
-    return arr?.length;
+    let arr = userData?.pending_friends?.filter((item) => item === ownData?._id);
+    return arr?.length > 0;
   };
 
   const myPendingList = () => {
-    let arr = ownData?.pending_friends?.filter((item) => {
-      return item === userData?._id;
-    });
-    return arr?.length;
+    let arr = ownData?.pending_friends?.filter((item) => item === userData?._id);
+    return arr?.length > 0;
   };
 
   const checkFriendStatus = () => {
     if (myFriend()) {
       return "Disconnect";
     } else if (userPendingListFriend()) {
-      return "Request Sent ";
+      return "Request Sent";
     } else if (myPendingList()) {
       return "Accept Request";
     } else {
@@ -166,102 +151,79 @@ const Profile = () => {
   };
 
   const handleSendFriendRequest = async () => {
-    if (checkFriendStatus() === "Request Sent") return;
-    else if (checkFriendStatus() === "Connect") {
-      await axios
-        .post(
+    const status = checkFriendStatus();
+    if (status === "Request Sent") return;
+
+    try {
+      if (status === "Connect") {
+        const res = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/sendfriendrequest`,
           { receiver: userData?._id },
           { withCredentials: true }
-        )
-        .then((res) => {
-          toast.success(res?.data?.message);
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        })
-        .catch((error) => {
-          console.log(`Friend Request Sending error :${error}`);
-          toast.error(error?.response?.data?.error);
-        });
-    } else if (checkFriendStatus() === "Accept Request") {
-      await axios
-        .post(
+        );
+        toast.success(res?.data?.message || "Request Sent");
+        setTimeout(() => window.location.reload(), 1500);
+      } else if (status === "Accept Request") {
+        const res = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/acceptfriendrequest`,
           { friendId: userData?._id },
           { withCredentials: true }
-        )
-        .then((res) => {
-          toast.success(res?.data?.message);
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        })
-        .catch((error) => {
-          console.log(`request accepting error : ${error}`);
-          toast.error(error?.response?.data?.error);
-        });
-    } else if (checkFriendStatus() === "Disconnect") {
-      await axios
-        .delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${
-            userData?._id
-          }`,
+        );
+        toast.success(res?.data?.message || "Request Accepted");
+        setTimeout(() => window.location.reload(), 1500);
+      } else if (status === "Disconnect") {
+        const res = await axios.delete(
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${userData?._id}`,
           { withCredentials: true }
-        )
-        .then((res) => {
-          toast.success(res?.data?.message);
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        })
-        .catch((error) => {
-          console.log(`user disconnect error : ${error}`);
-          // toast.error(error?.response?.data?.error);
-        });
+        );
+        toast.success(res?.data?.message || "Disconnected");
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (error) {
+      console.log(`Friend Request Error: ${error}`);
+      toast.error(error?.response?.data?.error || "Action failed");
     }
   };
-  //Handle Share Button
+
   const handleShareBtn = async () => {
     try {
       let string = `${import.meta.env.VITE_FRONTEND_URL}/profile/${id}`;
       await navigator.clipboard.writeText(string);
-      toast.success("Url Copied");
+      toast.success("Profile URL Copied!");
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.error);
+      toast.error("Could not copy URL");
     }
   };
-  //Handle Logout Button
+
   const handleLogoutBtn = async () => {
-    await axios
-      .post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        localStorage.clear();
-        window.location.reload();
-      })
-      .catch((error) => {
-        console.log(error);
-        toast.error(error?.response?.data?.error);
-      });
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+      localStorage.clear();
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+      toast.error("Logout failed");
+    }
   };
 
   return (
     <div className="px-5 xl:px-50 py-5 flex-col pt-12 flex gap-5 w-full mt-5 bg-gray-100">
       <div className="flex justify-between">
-        {/*Left-Section */}
-
+        {/* Left Section */}
         <div className="w-full md:w-[70%]">
-          {/*User-Section */}
+          {/* User Section */}
           <div>
             <Card padding={0}>
               <div className="w-full h-fit">
                 <div className="relative w-full h-[200px]">
-                  {userData?._id == ownData?._id && (
+                  {userData?._id === ownData?._id && (
                     <div
-                      className="absolute cursor-pointer top-3 right-3 z-20 w-[35px] flex justify-center items-center h-[35px] rounded-full p-3 bg-white"
+                      className="absolute cursor-pointer top-3 right-3 z-20 w-[35px] flex justify-center items-center h-[35px] rounded-full p-3 bg-white hover:bg-gray-100"
                       onClick={handleEditCoverModal}
                     >
                       <EditIcon />
@@ -269,7 +231,8 @@ const Profile = () => {
                   )}
                   <img
                     src={userData?.cover_pic}
-                    className="w-full h-[200px] rounded-tr-lg rounded-tl-lg"
+                    className="w-full h-[200px] rounded-tr-lg rounded-tl-lg object-cover"
+                    alt="cover"
                   />
                   <div
                     onClick={handleCircularCoverModal}
@@ -277,46 +240,46 @@ const Profile = () => {
                   >
                     <img
                       src={userData?.profile_pic}
-                      className="w-35 h-35 border-2 cursor-pointer border-white rounded-full"
+                      className="w-35 h-35 border-2 cursor-pointer border-white rounded-full object-cover"
+                      alt="profile"
                     />
                   </div>
                 </div>
 
                 <div className="mt-10 relative px-8 py-2">
-                  {userData?._id == ownData?._id && (
+                  {userData?._id === ownData?._id && (
                     <div
-                      className="absolute cursor-pointer top-3 right-3 z-20 w-[35px] flex justify-center items-center h-[35px] rounded-full p-3 bg-white"
+                      className="absolute cursor-pointer top-3 right-3 z-20 w-[35px] flex justify-center items-center h-[35px] rounded-full p-3 bg-white hover:bg-gray-100"
                       onClick={handleInfoModal}
                     >
                       <EditIcon />
                     </div>
                   )}
                   <div className="w-full">
-                    <div className="text-2xl">{userData?.f_name}</div>
+                    <div className="text-2xl font-bold">{userData?.f_name}</div>
                     <div className="text-gray-700">{userData?.headline}</div>
                     <div className="text-gray-500 text-sm">
                       {userData?.curr_location}
                     </div>
-                    <div className="text-md text-blue-800 w-fit cursor-pointer hover:underline">
-                      {userData?.friends?.length} Connections
+                    <div className="text-md text-blue-800 w-fit cursor-pointer hover:underline font-medium my-1">
+                      {userData?.friends?.length || 0} Connections
                     </div>
 
-                    {/*Button */}
-
-                    <div className="md:flex w-full justify-between">
-                      <div className="my-5 gap-5 flex">
-                        <div className="cursor-pointer p-2 border-1 rounded-lg bg-blue-800 text-white font-semibold">
+                    {/* Buttons */}
+                    <div className="md:flex w-full justify-between items-center">
+                      <div className="my-5 gap-3 flex flex-wrap">
+                        <div className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold hover:bg-blue-900">
                           Open to
                         </div>
                         <div
-                          className="cursor-pointer p-2 border-1 rounded-lg bg-blue-800 text-white font-semibold"
+                          className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold hover:bg-blue-900"
                           onClick={handleShareBtn}
                         >
                           Share
                         </div>
                         {userData?._id === ownData?._id && (
                           <div
-                            className="cursor-pointer p-2 border-1 rounded-lg bg-blue-800 text-white font-semibold"
+                            className="cursor-pointer p-2 border rounded-lg bg-red-700 text-white font-semibold hover:bg-red-800"
                             onClick={handleLogoutBtn}
                           >
                             Logout
@@ -324,23 +287,23 @@ const Profile = () => {
                         )}
                       </div>
 
-                      <div className="my-5 gap-5 flex">
-                        {myFriend() ? (
+                      <div className="my-5 gap-3 flex flex-wrap">
+                        {myFriend() && (
                           <div
                             onClick={handleMessageModal}
-                            className="cursor-pointer p-2 border-1 rounded-lg bg-blue-800 text-white font-semibold"
+                            className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold hover:bg-blue-900"
                           >
                             Message
                           </div>
-                        ) : null}
-                        {userData?._id !== ownData?._id ? (
+                        )}
+                        {userData?._id !== ownData?._id && (
                           <div
                             onClick={handleSendFriendRequest}
-                            className="cursor-pointer p-2 border-1 rounded-lg bg-blue-800 text-white font-semibold"
+                            className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold hover:bg-blue-900"
                           >
                             {checkFriendStatus()}
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -349,148 +312,132 @@ const Profile = () => {
             </Card>
           </div>
 
-          {/*About-Section */}
+          {/* About Section */}
           <div className="my-5">
             <Card padding={1}>
               <div className="flex justify-between items-center">
-                <div className="text-xl">About</div>
+                <div className="text-xl font-bold">About</div>
                 {userData?._id === ownData?._id && (
                   <div onClick={handleAboutModal} className="cursor-pointer">
                     <EditIcon />
                   </div>
                 )}
               </div>
-              <div className="text-gray-700 text-md w-[80%]">
-                {userData?.about}
+              <div className="text-gray-700 text-md w-[80%] mt-2">
+                {userData?.about || "No about information added."}
               </div>
             </Card>
           </div>
 
-          {/*Skill-Section */}
+          {/* Skill Section */}
           <div className="my-5">
             <Card padding={1}>
               <div className="flex justify-between items-center">
-                <div className="text-xl">Skill</div>
+                <div className="text-xl font-bold">Skills</div>
               </div>
-              <div className="my-5 gap-5 flex flex-wrap">
-                {userData?.skills?.map((item, index) => {
-                  return (
+              <div className="my-5 gap-3 flex flex-wrap">
+                {userData?.skills && userData?.skills?.length > 0 ? (
+                  userData?.skills?.map((item, index) => (
                     <div
                       key={index}
-                      className="cursor-pointer p-2 border-1 rounded-lg gap-3 bg-blue-800 text-white font-semibold"
+                      className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold"
                     >
                       {item}
                     </div>
-                  );
-                })}
+                  ))
+                ) : (
+                  <div className="text-gray-400">No skills added yet</div>
+                )}
               </div>
             </Card>
           </div>
 
-          {/*Activity-Section */}
+          {/* Activity Section */}
           <div className="mt-5">
             <Card padding={1}>
               <div className="flex justify-between items-center">
-                <div className="text-xl">Activities</div>
+                <div className="text-xl font-bold">Activities</div>
               </div>
 
-              <div className="cursor-pointer px-3 py-1 w-fit border-1 rounded-4xl bg-green-800 text-white font-semibold">
+              <div className="cursor-pointer px-3 py-1 w-fit border rounded-full bg-green-800 text-white font-semibold my-2">
                 Posts
               </div>
 
-              {/*Activity-Section-{Parent Div for Scroll Activity Post} */}
-
               <div className="overflow-x-auto my-2 flex gap-3 overflow-y-hidden w-full">
-                {postData.map((item, index) => {
-                  return (
-                    <div
-                      key={index}
-                      onClick={() =>
-                        navigate(`/profile/${id}/activities/${item?._id}`)
-                      }
-                      className="shrink-0 cursor-pointer w-[350px] h-[560px]"
-                    >
-                      <Post profile={1} item={item} personalData={ownData} />
-                    </div>
-                  );
-                })}
+                {postData.map((item, index) => (
+                  <div
+                    key={index}
+                    onClick={() => navigate(`/profile/${id}/activities/${item?._id}`)}
+                    className="shrink-0 cursor-pointer w-[350px] h-[560px]"
+                  >
+                    <Post profile={1} item={item} personalData={ownData} />
+                  </div>
+                ))}
               </div>
+
               {postData.length > 0 ? (
                 <div className="w-full mt-3 flex justify-center items-center">
                   <Link
                     to={`/profile/${id}/activities`}
-                    className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-300"
+                    className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-300 flex items-center gap-1 font-semibold"
                   >
                     Show All Posts <ArrowRightAltSharpIcon />
                   </Link>
                 </div>
               ) : (
-                <div className="flex justify-center text-gray-400">
+                <div className="flex justify-center text-gray-400 py-3">
                   No Activities
                 </div>
               )}
             </Card>
           </div>
 
-          {/*Experience-Section */}
+          {/* Experience Section */}
           <div className="mt-5">
             <Card padding={1}>
               <div className="flex justify-between items-center">
-                <div className="text-xl">Experience</div>
+                <div className="text-xl font-bold">Experience</div>
                 {userData?._id === ownData?._id && (
-                  <div
-                    onClick={handleExperienceModal}
-                    className="cursor-pointer"
-                  >
+                  <div onClick={handleExperienceModal} className="cursor-pointer">
                     <AddIcon />
                   </div>
                 )}
               </div>
-              {/*Experience-Section-{Writing Section} */}
-              {userData?.experience.length > 0 ? (
+
+              {userData?.experience && userData?.experience?.length > 0 ? (
                 <div className="mt-5">
-                  {userData?.experience?.map((item, index) => {
-                    return (
-                      <div className="p-2 border-t-1 border-gray-300 flex justify-between">
-                        <div>
-                          <div className="text-lg">
-                            {item.designation ? item.designation : null}
-                          </div>
-                          <div className="text-sm">
-                            {item.company_name ? item.company_name : null}
-                          </div>
-                          <div className="text-sm">
-                            {item.duration ? item.duration : null}
-                          </div>
-                          <div className="text-sm">
-                            {item.location ? item.location : null}
-                          </div>
-                        </div>
-                        {userData?._id === ownData?._id && (
-                          <div
-                            onClick={() => {
-                              updateExperienceEdit(item._id, item);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <EditIcon />
-                          </div>
-                        )}
+                  {userData?.experience?.map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-2 border-t border-gray-300 flex justify-between"
+                    >
+                      <div>
+                        <div className="text-lg font-semibold">{item.designation}</div>
+                        <div className="text-sm text-gray-700">{item.company_name}</div>
+                        <div className="text-sm text-gray-500">{item.duration}</div>
+                        <div className="text-sm text-gray-500">{item.location}</div>
                       </div>
-                    );
-                  })}
+                      {userData?._id === ownData?._id && (
+                        <div
+                          onClick={() => updateExperienceEdit(item._id, item)}
+                          className="cursor-pointer"
+                        >
+                          <EditIcon />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="flex justify-center text-gray-400">
-                  No Experience mention
+                <div className="flex justify-center text-gray-400 py-3">
+                  No Experience mentioned
                 </div>
               )}
             </Card>
           </div>
         </div>
 
-        {/*Right-Section */}
-
+        {/* Right Section */}
         <div className="hidden md:flex md:w-[28%]">
           <div className="sticky top-19">
             <Advertisement />
@@ -498,6 +445,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Modals */}
       {imageModal && (
         <Modal title="Upload image" closeModal={handleImageModalOpenClose}>
           <ImageModal
@@ -509,7 +457,7 @@ const Profile = () => {
       )}
 
       {infoModal && (
-        <Modal title="Edit" closeModal={handleInfoModal}>
+        <Modal title="Edit Profile" closeModal={handleInfoModal}>
           <EditModal handleEditFunc={handleEditFunc} userData={ownData} />
         </Modal>
       )}
@@ -532,10 +480,11 @@ const Profile = () => {
       )}
 
       {messageModal && (
-        <Modal title="Edit Experience" closeModal={handleMessageModal}>
+        <Modal title="Message" closeModal={handleMessageModal}>
           <MessageModal selfData={ownData} userData={userData} />
         </Modal>
       )}
+
       <ToastContainer />
     </div>
   );

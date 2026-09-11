@@ -7,21 +7,23 @@ const ProfileCard = (props) => {
     <Card padding={0}>
       <div className="relative h-25">
         <Link
-          to={`/profile/${props?.data?._id}`}
+          to={props?.data?._id ? `/profile/${props.data._id}` : "#"}
           className="relative w-full h-22 rounded-md"
         >
           <img
             src={props?.data?.cover_pic}
             className="rounded-t-md h-full w-full"
+            alt="cover"
           />
         </Link>
         <Link
-          to={`/profile/${props?.data?._id}`}
+          to={props?.data?._id ? `/profile/${props.data._id}` : "#"}
           className="absolute top-14 left-6 z-10"
         >
           <img
             src={props.data?.profile_pic}
             className="rounded-4xl border-2 h-16 w-16 border-white cursor-pointer"
+            alt="profile"
           />
         </Link>
       </div>
