@@ -46,28 +46,29 @@ const Notify = () => {
   };
 
   return (
-    <div className="px-5 xl:px-50 py-9 flex gap-5 w-full mt-5 bg-gray-100">
-      {/*Left side */}
-      <div className="w-[21%] sm:block sm:w-[23%] hidden py-5">
-        <div className="h-fit">
-          <ProfileCard data={user} />
+    <div className="w-full py-4 sm:py-6 px-2 sm:px-4 md:px-8 xl:px-24 flex justify-center bg-gray-100">
+      <div className="flex justify-between gap-5 w-full max-w-6xl">
+        {/*Left side */}
+        <div className="w-[24%] hidden md:block">
+          <div className="h-fit">
+            <ProfileCard data={user} />
+          </div>
+          <div className="w-full my-5">
+            <Card padding={1}>
+              <div className="w-full flex justify-between ">
+                <div>Profile Viewers</div>
+                <div className="text-blue-900">23</div>
+              </div>
+              <div className="w-full flex justify-between ">
+                <div>Post Impression</div>
+                <div className="text-blue-900">90</div>
+              </div>
+            </Card>
+          </div>
         </div>
-        <div className="w-full my-5">
-          <Card padding={1}>
-            <div className="w-full flex justify-between ">
-              <div>Profile Viewers</div>
-              <div className="text-blue-900">23</div>
-            </div>
-            <div className="w-full flex justify-between ">
-              <div>Post Impression</div>
-              <div className="text-blue-900">90</div>
-            </div>
-          </Card>
-        </div>
-      </div>
 
-      {/*Middle side*/}
-      <div className="flex flex-col w-[100%] sm:w-[80%] border border-gray-200 rounded-2xl overflow-auto h-[90vh] ">
+        {/*Middle side*/}
+        <div className="flex flex-col w-full md:w-[72%] lg:w-[48%] border border-gray-200 rounded-2xl overflow-auto h-[90vh] bg-white">
         <div className="flex flex-col w-[100%] py-5 ">
           <div>
             <Card padding={0}>
@@ -96,7 +97,7 @@ const Notify = () => {
         </div>
       </div>
       {/*Right side */}
-      <div className="w-[26%] py-5 hidden md:block">
+      <div className="w-[24%] hidden lg:block">
         <div>
           <Card padding={1}>
             <div className="text-xl">LinkedIn News</div>
@@ -116,6 +117,7 @@ const Notify = () => {
         <div className="sticky my-5 top-19">
           <Advertisement />
         </div>
+      </div>
       </div>
     </div>
   );

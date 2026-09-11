@@ -1,23 +1,25 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import Advertisement from "../../components/advertisment/Advertisement";
 import { AuthContext } from "../../context/AuthContext";
 
 const Resume = () => {
   const { user } = useContext(AuthContext);
   return (
-    <div className="px-5 xl:px-50 py-9 flex gap-5 w-full mt-5 bg-gray-100">
-      {user?.resume ? (
-        <div className="w-[100%] py-5 sm:w-[74%]">
-          <img src={user?.resume} className="w-full h-full rounded-lg" />
+    <div className="w-full py-4 sm:py-6 px-2 sm:px-4 md:px-8 xl:px-24 flex justify-center bg-gray-100">
+      <div className="flex justify-between gap-5 w-full max-w-6xl">
+        <div className="w-full md:w-[72%]">
+          {user?.resume ? (
+            <img src={user?.resume} alt="Resume" className="w-full h-auto rounded-lg shadow-sm" />
+          ) : (
+            <div className="w-full bg-white p-12 rounded-xl shadow-xs text-center text-gray-500 font-medium">
+              📄 No resume uploaded yet. Visit your profile to upload one!
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="w-[80%] h-full flex justify-center pt-40 ">
-          No resume posted
-        </div>
-      )}
-      <div className="w-[26%] py-5 hidden md:block">
-        <div className="sticky top-19">
-          <Advertisement />
+        <div className="w-[26%] hidden md:block">
+          <div className="sticky top-18">
+            <Advertisement />
+          </div>
         </div>
       </div>
     </div>

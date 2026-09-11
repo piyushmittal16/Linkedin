@@ -13,7 +13,7 @@ import ExperienceModal from "../../components/experienceModal/ExperienceModal";
 import ArrowRightAltSharpIcon from "@mui/icons-material/ArrowRightAltSharp";
 import MessageModal from "../../components/messageModal/MessageModal";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 const Profile = () => {
   const { id } = useParams();
@@ -212,10 +212,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="px-5 xl:px-50 py-5 flex-col pt-12 flex gap-5 w-full mt-5 bg-gray-100">
-      <div className="flex justify-between">
+    <div className="w-full py-4 sm:py-6 px-2 sm:px-4 md:px-8 xl:px-24 flex justify-center bg-gray-100">
+      <div className="flex flex-col lg:flex-row justify-between gap-5 w-full max-w-6xl">
         {/* Left Section */}
-        <div className="w-full md:w-[70%]">
+        <div className="w-full lg:w-[70%]">
           {/* User Section */}
           <div>
             <Card padding={0}>
@@ -438,7 +438,7 @@ const Profile = () => {
         </div>
 
         {/* Right Section */}
-        <div className="hidden md:flex md:w-[28%]">
+        <div className="hidden lg:flex lg:w-[28%]">
           <div className="sticky top-19">
             <Advertisement />
           </div>
@@ -481,11 +481,9 @@ const Profile = () => {
 
       {messageModal && (
         <Modal title="Message" closeModal={handleMessageModal}>
-          <MessageModal selfData={ownData} userData={userData} />
+          <MessageModal selfData={ownData} userData={userData} closeModal={handleMessageModal} />
         </Modal>
       )}
-
-      <ToastContainer />
     </div>
   );
 };

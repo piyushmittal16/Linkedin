@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 //for Showing error when user submit form without fill inputs
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import axios from "axios";
 
 const LogIn = (props) => {
@@ -82,7 +82,6 @@ const LogIn = (props) => {
       <Link to={"/signup"} className="mt-4 mb-10 ">
         New to LinkedIn ? <span className="text-blue-800">Join Now</span>
       </Link>
-      <ToastContainer />
     </div>
   );
 };

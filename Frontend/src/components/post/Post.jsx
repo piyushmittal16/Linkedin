@@ -6,7 +6,7 @@ import CommentOutlinedIcon from "@mui/icons-material/CommentOutlined";
 import CommentIcon from "@mui/icons-material/Comment";
 import Button from "@mui/material/Button";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
 const Post = ({ profile, item, personalData }) => {
@@ -259,7 +259,6 @@ const Post = ({ profile, item, personalData }) => {
           </div>
         </div>
       )}
-      <ToastContainer />
     </Card>
   );
 };

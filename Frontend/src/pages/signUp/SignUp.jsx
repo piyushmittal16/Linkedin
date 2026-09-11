@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import axios from "axios";
 
 const SignUp = (props) => {
@@ -92,7 +92,6 @@ const SignUp = (props) => {
       <Link to={"/login"} className="mt-4 mb-10 ">
         Already on LinkedIn ? <span className="text-blue-800">Sign in</span>
       </Link>
-      <ToastContainer />
     </div>
   );
 };

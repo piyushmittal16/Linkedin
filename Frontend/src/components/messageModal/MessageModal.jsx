@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
-const MessageModal = ({ selfData, userData }) => {
+const MessageModal = ({ selfData, userData, closeModal }) => {
   const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   const handleSendBtn = async () => {
     if (!message.trim()) {
@@ -12,6 +12,7 @@ const MessageModal = ({ selfData, userData }) => {
       return;
     }
 
+    setSending(true);
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/conversation/add-conversation`,
@@ -21,61 +22,44 @@ const MessageModal = ({ selfData, userData }) => {
 
       toast.success(res?.data?.message || "Message sent successfully!");
       setMessage("");
+      if (closeModal) closeModal();
     } catch (err) {
       console.error(err);
       toast.error("Failed to send message. Please try again.");
+    } finally {
+      setSending(false);
     }
   };
 
   return (
-    <div
-      className="mt-8 w-full h-[350px] overflow-auto pt-2 flex flex-col justify-between"
-      style={{ position: "relative" }}
-    >
+    <div className="w-full flex flex-col justify-between pt-2">
       {/* 💬 Message Input */}
       <div className="w-full mb-4">
-        <label className="font-semibold text-gray-700">Message</label>
-        <br />
+        <label className="block text-sm font-semibold text-gray-700 mb-1">
+          To: <span className="text-blue-700 font-bold">{userData?.f_name}</span>
+        </label>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="p-2 mt-1 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-          cols={10}
-          rows={10}
+          className="p-3 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+          rows={5}
           placeholder="Write your message..."
         ></textarea>
       </div>
 
       {/* 🚀 Send Button */}
-      <button
-        onClick={handleSendBtn}
-        className="bg-blue-600 text-white w-fit py-1 px-4 cursor-pointer hover:bg-blue-800 rounded-2xl transition-all self-start"
-      >
-        Send
-      </button>
-
-      {/* ✅ Toast Container always on top of navbar */}
-      <ToastContainer
-        position="top-center"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="colored"
-        toastStyle={{
-          borderRadius: "8px",
-          fontSize: "14px",
-          fontWeight: 500,
-        }}
-        style={{
-          zIndex: 9999, // 👈 Keeps toast above navbar
-          top: "0",
-        }}
-      />
+      <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+        <button
+          onClick={handleSendBtn}
+          disabled={sending}
+          className="bg-blue-600 text-white font-medium py-1.5 px-6 cursor-pointer hover:bg-blue-700 rounded-full transition-all text-sm disabled:opacity-50"
+        >
+          {sending ? "Sending..." : "Send"}
+        </button>
+      </div>
     </div>
   );
 };
 
 export default MessageModal;
+

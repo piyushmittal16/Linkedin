@@ -16,6 +16,8 @@ import Activities from "./pages/activities/Activities.jsx";
 import SingleActivity from "./pages/singleActivity/SingleActivity.jsx";
 import Notify from "./pages/notify/Notify.jsx";
 import axios from "axios";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 axios.defaults.withCredentials = true; // ✅ globally enables cookie sending
 
@@ -25,78 +27,89 @@ function App() {
     setIsLogin(val); 
   };
 
- 
-
   return (
-    <div className="bg-gray-100 w-[100%] h-[100%] box-border">
+    <div className="bg-gray-100 min-h-screen flex flex-col justify-between box-border">
       {isLogin ? <NavbarV2 /> : <NavbarV1 />}
-      <Routes>
-        <Route
-          path="/"
-          element={
-            isLogin ? (
-              <Navigate to={"/feeds"} />
-            ) : (
-              <LandingPage changeLoginValue={changeLoginValue} />
-            )
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            isLogin ? (
-              <Navigate to={"/feeds"} />
-            ) : (
-              <SignUp changeLoginValue={changeLoginValue} />
-            )
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            isLogin ? (
-              <Navigate to={"/feeds"} />
-            ) : (
-              <LogIn changeLoginValue={changeLoginValue} />
-            )
-          }
-        />
-        <Route
-          path="/feeds"
-          element={isLogin ? <Feeds /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/mynetwork"
-          element={isLogin ? <MyNetwork /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/resume"
-          element={isLogin ? <Resume /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/message"
-          element={isLogin ? <Message /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/profile/:id"
-          element={isLogin ? <Profile /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/profile/:id/activities"
-          element={isLogin ? <Activities /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/profile/:id/activities/:postId"
-          element={isLogin ? <SingleActivity /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/Notification"
-          element={isLogin ? <Notify /> : <Navigate to={"/login"} />}
-        />
-      </Routes>
+      <main className="flex-1 w-full flex flex-col pt-13">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              isLogin ? (
+                <Navigate to={"/feeds"} />
+              ) : (
+                <LandingPage changeLoginValue={changeLoginValue} />
+              )
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              isLogin ? (
+                <Navigate to={"/feeds"} />
+              ) : (
+                <SignUp changeLoginValue={changeLoginValue} />
+              )
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              isLogin ? (
+                <Navigate to={"/feeds"} />
+              ) : (
+                <LogIn changeLoginValue={changeLoginValue} />
+              )
+            }
+          />
+          <Route
+            path="/feeds"
+            element={isLogin ? <Feeds /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/mynetwork"
+            element={isLogin ? <MyNetwork /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/resume"
+            element={isLogin ? <Resume /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/message"
+            element={isLogin ? <Message /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/profile/:id"
+            element={isLogin ? <Profile /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/profile/:id/activities"
+            element={isLogin ? <Activities /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/profile/:id/activities/:postId"
+            element={isLogin ? <SingleActivity /> : <Navigate to={"/login"} />}
+          />
+          <Route
+            path="/Notification"
+            element={isLogin ? <Notify /> : <Navigate to={"/login"} />}
+          />
+        </Routes>
+      </main>
       <Footer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        theme="light"
+        style={{ zIndex: 99999 }}
+      />
     </div>
   );
 }
 
 export default App;
+

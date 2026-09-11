@@ -9,7 +9,7 @@ import Post from "../../components/post/Post.jsx";
 import Modal from "../../components/modal/Modal";
 import AddModal from "../../components/addModal/AddModal";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { AuthContext } from "../../context/AuthContext";
 
 const Feeds = () => {
@@ -41,28 +41,29 @@ const Feeds = () => {
   };
 
   return (
-    <div className="px-5 xl:px-50 py-9 flex gap-5 w-full mt-5 bg-gray-100">
-      {/*Left side */}
-      <div className="w-[21%] sm:block sm:w-[23%] hidden py-5">
-        <div className="h-fit">
-          <ProfileCard data={user} />
+    <div className="w-full py-4 sm:py-6 px-2 sm:px-4 md:px-8 xl:px-24 flex justify-center bg-gray-100">
+      <div className="flex justify-between gap-5 w-full max-w-6xl">
+        {/*Left side */}
+        <div className="w-[24%] hidden md:block">
+          <div className="h-fit">
+            <ProfileCard data={user} />
+          </div>
+          <div className="w-full my-5">
+            <Card padding={1}>
+              <div className="w-full flex justify-between ">
+                <div>Profile Viewers</div>
+                <div className="text-blue-900">23</div>
+              </div>
+              <div className="w-full flex justify-between ">
+                <div>Post Impression</div>
+                <div className="text-blue-900">90</div>
+              </div>
+            </Card>
+          </div>
         </div>
-        <div className="w-full my-5">
-          <Card padding={1}>
-            <div className="w-full flex justify-between ">
-              <div>Profile Viewers</div>
-              <div className="text-blue-900">23</div>
-            </div>
-            <div className="w-full flex justify-between ">
-              <div>Post Impression</div>
-              <div className="text-blue-900">90</div>
-            </div>
-          </Card>
-        </div>
-      </div>
 
-      {/*Middle side */}
-      <div className="w-[100%] py-5 sm:w-[50%]">
+        {/*Middle side */}
+        <div className="w-full md:w-[72%] lg:w-[48%]">
         <div>
           {/*Post Section */}
           <Card padding={1}>
@@ -123,7 +124,7 @@ const Feeds = () => {
       </div>
 
       {/*Right side */}
-      <div className="w-[26%] py-5 hidden md:block">
+      <div className="w-[24%] hidden lg:block">
         <div>
           <Card padding={1}>
             <div className="text-xl">LinkedIn News</div>
@@ -144,14 +145,13 @@ const Feeds = () => {
           <Advertisement />
         </div>
       </div>
+      </div>
 
       {addPostModal && (
         <Modal title={""} closeModal={handleModalPost}>
           <AddModal data={user} />
         </Modal>
       )}
-
-      <ToastContainer />
     </div>
   );
 };

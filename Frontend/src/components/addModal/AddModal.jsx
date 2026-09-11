@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ImageIcon from "@mui/icons-material/Image";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import axios from "axios";
 
 const AddModal = (props) => {
@@ -94,7 +94,6 @@ const AddModal = (props) => {
           Post
         </div>
       </div>
-      <ToastContainer />
     </div>
   );
 };

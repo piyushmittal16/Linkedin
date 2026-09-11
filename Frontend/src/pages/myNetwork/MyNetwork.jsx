@@ -37,9 +37,10 @@ function MyNetwork() {
   }, [showContent]);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-16 py-9 flex flex-col gap-5 w-full mt-5 bg-gray-100">
-      {/* ---------------- Header Section ---------------- */}
-      <div className="py-4 px-4 sm:px-8 border border-gray-300 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-lg sm:text-xl bg-white rounded-xl shadow-sm">
+    <div className="w-full py-4 sm:py-6 px-2 sm:px-4 md:px-8 xl:px-24 flex justify-center bg-gray-100">
+      <div className="w-full max-w-6xl flex flex-col gap-5">
+        {/* ---------------- Header Section ---------------- */}
+        <div className="py-4 px-4 sm:px-8 border border-gray-300 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-lg sm:text-xl bg-white rounded-xl shadow-sm">
         <div className="text-center sm:text-left font-semibold text-gray-800">
           {showContent}
         </div>
@@ -87,6 +88,7 @@ function MyNetwork() {
             </div>
           ))
         )}
+      </div>
       </div>
     </div>
   );
