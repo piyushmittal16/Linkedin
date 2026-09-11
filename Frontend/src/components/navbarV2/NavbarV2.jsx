@@ -51,6 +51,7 @@ const NavbarV2 = () => {
   const handleCloseSearch = () => {
     setMobileSearchActive(false);
     setSearchTerm("");
+    setDebouncedTerm("");
     setSearchUser([]);
   };
 
@@ -68,26 +69,39 @@ const NavbarV2 = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             value={searchTerm}
             type="text"
-            className="searchInput w-70 bg-gray-100 rounded-sm h-10 px-4"
+            className="searchInput w-70 bg-gray-100 rounded-sm h-10 px-4 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
             placeholder="Search"
           />
-          {searchUser.length > 0 && debouncedTerm.length > 0 && (
-            <div className="absolute w-88 left-0 bg-gray-200">
-              {searchUser.map((item, index) => (
-                <Link
-                  to={`/profile/${item?._id}`}
-                  key={index}
-                  className="flex gap-2 mb-1 items-center p-2 hover:bg-gray-300 cursor-pointer"
-                  onClick={() => setSearchTerm("")}
-                >
-                  <img
-                    className="w-11 h-10 rounded-full"
-                    src={item?.profile_pic}
-                    alt=""
-                  />
-                  <div>{item?.f_name}</div>
-                </Link>
-              ))}
+          {debouncedTerm.length > 0 && (
+            <div className="absolute w-88 left-0 top-11 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50 divide-y divide-gray-100">
+              {searchUser.length > 0 ? (
+                searchUser.map((item, index) => (
+                  <Link
+                    to={`/profile/${item?._id}`}
+                    key={index}
+                    className="flex gap-3 items-center p-2.5 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedTerm("");
+                      setSearchUser([]);
+                    }}
+                  >
+                    <img
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      src={item?.profile_pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                      alt=""
+                    />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-800">{item?.f_name}</div>
+                      <div className="text-xs text-gray-500 line-clamp-1">{item?.headline || "LinkedIn Member"}</div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-3 text-center text-xs text-gray-400">
+                  No users found
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -168,18 +182,50 @@ const NavbarV2 = () => {
 
       {/* 🔎 Mobile Search Mode */}
       {mobileSearchActive && (
-        <div className="absolute left-0 top-0 w-full bg-white flex items-center px-3 py-2 shadow-md sm:hidden">
-          <input
-            autoFocus
-            onChange={(e) => setSearchTerm(e.target.value)}
-            value={searchTerm}
-            type="text"
-            placeholder="Search users..."
-            className="flex-grow bg-gray-100 rounded-md px-4 py-2 focus:outline-none"
-          />
-          <button onClick={handleCloseSearch} className="ml-2">
-            <CloseIcon />
-          </button>
+        <div className="fixed left-0 top-0 w-full bg-white z-50 shadow-md sm:hidden flex flex-col">
+          <div className="flex items-center px-3 py-2.5 border-b border-gray-200">
+            <input
+              autoFocus
+              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
+              type="text"
+              placeholder="Search users..."
+              className="flex-grow bg-gray-100 rounded-md px-4 py-2 focus:outline-none text-sm"
+            />
+            <button onClick={handleCloseSearch} className="ml-2 text-gray-600 p-1">
+              <CloseIcon />
+            </button>
+          </div>
+
+          {/* 🔍 Mobile Search Results List */}
+          {debouncedTerm.length > 0 && (
+            <div className="w-full max-h-[70vh] overflow-y-auto bg-white divide-y divide-gray-100 shadow-xl">
+              {searchUser.length > 0 ? (
+                searchUser.map((item, index) => (
+                  <Link
+                    to={`/profile/${item?._id}`}
+                    key={index}
+                    className="flex gap-3 items-center p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={handleCloseSearch}
+                  >
+                    <img
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      src={item?.profile_pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                      alt=""
+                    />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-800">{item?.f_name}</div>
+                      <div className="text-xs text-gray-500 line-clamp-1">{item?.headline || "LinkedIn Member"}</div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-4 text-center text-sm text-gray-400">
+                  No users found for "{debouncedTerm}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
