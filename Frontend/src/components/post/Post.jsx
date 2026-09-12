@@ -8,6 +8,7 @@ import Button from "@mui/material/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import socket from "../../../socket.js";
 
 const Post = ({ profile, item, personalData }) => {
   const [seeMore, setSeeMore] = useState(false);
@@ -29,6 +30,41 @@ const Post = ({ profile, item, personalData }) => {
     setNoOfLikes(item.likes?.length || 0);
     setNoOfComments(item.comments || 0);
   }, [item, personalData]);
+
+  // ⚡ Real-time comment listener via Socket
+  useEffect(() => {
+    if (!item?._id) return;
+
+    const handleCommentAdded = (data) => {
+      if (data && String(data.postId) === String(item._id)) {
+        if (data.newCommentCount !== undefined) {
+          setNoOfComments(data.newCommentCount);
+        } else {
+          setNoOfComments((prev) => prev + 1);
+        }
+
+        if (data.comment) {
+          setComments((prev) => {
+            const exists = prev.some(
+              (c) => String(c._id) === String(data.comment._id)
+            );
+            if (exists) return prev;
+            return [data.comment, ...prev];
+          });
+        }
+
+        if (item) {
+          item.comments = data.newCommentCount || (item.comments || 0) + 1;
+        }
+      }
+    };
+
+    socket.on("postCommentAdded", handleCommentAdded);
+
+    return () => {
+      socket.off("postCommentAdded", handleCommentAdded);
+    };
+  }, [item?._id]);
 
   // ✅ Handle Like/Dislike
   const handleLikeFunction = async () => {
@@ -62,7 +98,7 @@ const Post = ({ profile, item, personalData }) => {
           `${import.meta.env.VITE_BACKEND_URL}/api/comments/${item?._id}`,
           { withCredentials: true }
         );
-        setComments(resp.data.comments);
+        setComments(resp.data.comments || []);
       } catch (err) {
         console.error(err);
         toast.error("Failed to load comments");
@@ -70,30 +106,60 @@ const Post = ({ profile, item, personalData }) => {
     }
   };
 
-  // ✅ Add new comment
+  // ✅ Add new comment with instant Optimistic UI update (0ms delay)
   const handleSendComment = async (e) => {
     e.preventDefault();
-    if (commentText.trim().length === 0)
+    const trimmed = commentText.trim();
+    if (trimmed.length === 0)
       return toast.error("Please enter comment");
+
+    // 1. Create optimistic comment
+    const tempId = `temp_${Date.now()}`;
+    const optimisticComment = {
+      _id: tempId,
+      comment: trimmed,
+      createdAt: new Date().toISOString(),
+      user: {
+        _id: personalData?._id,
+        f_name: personalData?.f_name || "You",
+        headline: personalData?.headline || "",
+        profile_pic: personalData?.profile_pic,
+      },
+    };
+
+    // 2. Immediately update UI
+    setComments((prev) => [optimisticComment, ...prev]);
+    setNoOfComments((prev) => prev + 1);
+    setCommentText("");
+    if (!commentSection) setCommentSection(true);
+    if (item) item.comments = (item.comments || 0) + 1;
 
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/comments`,
-        { postId: item?._id, comment: commentText },
+        { postId: item?._id, comment: trimmed },
         { withCredentials: true }
       );
 
       toast.success("Comment added successfully!");
-      setCommentText("");
 
-      const newComment = res.data.comment;
-      if (newComment) {
-        setComments((prev) => [newComment, ...prev]);
-        setNoOfComments((prev) => prev + 1);
+      const savedComment = res.data?.comment;
+      if (savedComment) {
+        setComments((prev) =>
+          prev.map((c) => (c._id === tempId ? savedComment : c))
+        );
+        if (res.data?.newCommentCount !== undefined) {
+          setNoOfComments(res.data.newCommentCount);
+          if (item) item.comments = res.data.newCommentCount;
+        }
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong");
+      // Rollback on error
+      setComments((prev) => prev.filter((c) => c._id !== tempId));
+      setNoOfComments((prev) => Math.max(0, prev - 1));
+      if (item) item.comments = Math.max(0, (item.comments || 1) - 1);
+      toast.error("Failed to add comment");
     }
   };
 

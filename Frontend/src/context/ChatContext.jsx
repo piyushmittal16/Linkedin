@@ -28,12 +28,17 @@ export const ChatProvider = ({ children }) => {
         { withCredentials: true }
       );
       const convos = res?.data?.conversations || [];
-      setConversations(convos);
 
-      // Join all conversation rooms for real-time messages
+      // Initialize unread counts map from DB
+      const initialMap = {};
       convos.forEach((c) => {
-        if (c?._id) socket.emit("joinConversation", c._id);
+        if (c._id) {
+          initialMap[c._id] = c.unreadCount || 0;
+          socket.emit("joinConversation", c._id);
+        }
       });
+      setUnreadMap(initialMap);
+      setConversations(convos);
     } catch (err) {
       console.error("Error fetching conversations:", err);
     }
@@ -51,6 +56,11 @@ export const ChatProvider = ({ children }) => {
 
       // Clear unread indicator for this conversation immediately
       setUnreadMap((prev) => ({ ...prev, [conversationId]: 0 }));
+      setConversations((prev) =>
+        prev.map((c) =>
+          c._id === conversationId ? { ...c, unreadCount: 0 } : c
+        )
+      );
 
       // 👁️ Mark messages as seen in DB & notify sender via socket (fire and forget, non-blocking)
       axios
@@ -170,8 +180,9 @@ export const ChatProvider = ({ children }) => {
     };
 
     // Seen status event: Receiver opened our messages
-    const handleConversationSeen = ({ conversationId }) => {
-      if (conversationId === activeConId) {
+    const handleConversationSeen = (data) => {
+      const convoId = data?.conversationId || data;
+      if (convoId && String(convoId) === String(activeConId)) {
         setMessages((prev) =>
           prev.map((msg) => ({ ...msg, isSeen: true }))
         );

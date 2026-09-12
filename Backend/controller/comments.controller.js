@@ -31,20 +31,39 @@ exports.commentPost = async (req, res) => {
       newComment._id
     ).populate("user", "f_name headline profile_pic");
 
-    // Create a notification for post owner
-    const notification = new NotificationModel({
-      sender: userId,
-      receiver: postExist.user._id,
-      type: "comment",
-      postId: postId.toString(),
-      content: `${req.user.f_name} commented on your post.`,
-    });
-    await notification.save();
+    // Create a notification for post owner (if not commenting on own post)
+    const postOwnerId = postExist.user?._id || postExist.user;
+    if (postOwnerId && String(postOwnerId) !== String(userId)) {
+      const notification = new NotificationModel({
+        sender: userId,
+        receiver: postOwnerId,
+        type: "comment",
+        postId: postId.toString(),
+        content: `${req.user.f_name || "Someone"} commented on your post.`,
+      });
+      await notification.save();
+
+      // ⚡ Emit real-time notification to post owner
+      if (req.io) {
+        const populatedNotif = await notification.populate("sender");
+        req.io.to(String(postOwnerId)).emit("newNotification", populatedNotif);
+      }
+    }
+
+    // ⚡ Broadcast new comment to all users in real time
+    if (req.io) {
+      req.io.emit("postCommentAdded", {
+        postId: String(postId),
+        comment: populatedComment,
+        newCommentCount: postExist.comments,
+      });
+    }
 
     // Send success response
     return res.status(200).json({
       message: "Commented Successfully",
       comment: populatedComment,
+      newCommentCount: postExist.comments,
     });
   } catch (error) {
     console.error("Error in commentPost:", error);

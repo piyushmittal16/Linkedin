@@ -43,7 +43,7 @@ exports.addConversation = async (req, res) => {
   }
 };
 
-// Get Conversation
+// Get Conversation (with unreadCount and lastMessage details)
 exports.getConversation = async (req, res) => {
   try {
     const ownId = req.user._id;
@@ -52,11 +52,40 @@ exports.getConversation = async (req, res) => {
       members: { $in: [ownId] },
     })
       .populate("members", "-password")
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 });
+
+    // Calculate unreadCount and lastMessage for each conversation
+    const conversationsWithDetails = await Promise.all(
+      conversations.map(async (convo) => {
+        const [lastMsg, unread] = await Promise.all([
+          MessageModal.findOne({ conversation: convo._id })
+            .sort({ createdAt: -1 }),
+          MessageModal.countDocuments({
+            conversation: convo._id,
+            sender: { $ne: ownId },
+            isSeen: false,
+          }),
+        ]);
+
+        return {
+          ...convo.toObject(),
+          lastMessage: lastMsg
+            ? lastMsg.message || (lastMsg.picture ? "📷 Photo" : "")
+            : "",
+          lastMessageTime: lastMsg ? lastMsg.createdAt : convo.updatedAt,
+          unreadCount: unread || 0,
+        };
+      })
+    );
+
+    // Sort by latest message time
+    conversationsWithDetails.sort(
+      (a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
+    );
 
     return res.status(200).json({
       message: "Fetched Successfully",
-      conversations,
+      conversations: conversationsWithDetails,
     });
   } catch (error) {
     console.error("Error in getConversation:", error);
