@@ -165,9 +165,12 @@ const NavbarV2 = () => {
           className="flex flex-col items-center cursor-pointer"
         >
           <img
-            className="w-10 h-10 rounded-full border"
-            src={user?.profile_pic}
+            className="w-10 h-10 rounded-full border object-cover"
+            src={user?.profile_pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
             alt="profile"
+            onError={(e) => {
+              e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            }}
           />
         </Link>
 

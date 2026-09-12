@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import { AuthContext } from "../../context/AuthContext";
 
 const Feeds = () => {
-  const { user } = useContext(AuthContext);
+  const { user, login } = useContext(AuthContext);
   const [addPostModal, setAddPostModal] = useState(false);
   const [post, setPost] = useState([]);
   const fetchData = async () => {
@@ -24,7 +24,10 @@ const Feeds = () => {
         }),
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getallposts`),
       ]);
-      setPost(postData.data.posts);
+      setPost(postData.data?.posts || []);
+      if (userData?.data?.user) {
+        login(userData.data.user);
+      }
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.error);
@@ -69,9 +72,12 @@ const Feeds = () => {
           <Card padding={1}>
             <div className="flex gap-2 items-center">
               <img
-                src={user?.profile_pic}
-                alt="User Profile" // ✅ FIXED: Added alt attribute
-                className="rounded-4xl w-13 h-13 border-white cursor-pointer"
+                src={user?.profile_pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                alt="User Profile"
+                className="rounded-4xl w-13 h-13 border-white cursor-pointer object-cover"
+                onError={(e) => {
+                  e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                }}
               />
               <div
                 onClick={() => {

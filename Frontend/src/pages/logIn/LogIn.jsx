@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 //for Showing error when user submit form without fill inputs
 import { toast } from "react-toastify";
 import axios from "axios";
+import { AuthContext } from "../../context/AuthContext.jsx";
 
 const LogIn = (props) => {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
   const [loginField, setLoginField] = useState({
     email: "",
     password: "",
@@ -44,15 +46,19 @@ const LogIn = (props) => {
       );
 
       toast.success("You have logged in successfully");
-      props.changeLoginValue(true);
-      localStorage.setItem("isLogin", "true");
 
       if (res.data?.token) {
         localStorage.setItem("token", res.data.token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
       }
 
-      localStorage.setItem("userInfo", JSON.stringify(res.data.userExist));
+      localStorage.setItem("isLogin", "true");
+      // ✅ Update AuthContext immediately so profile pic, navbar and feeds reflect user without refresh
+      if (res.data?.userExist) {
+        login(res.data.userExist);
+      }
+
+      props.changeLoginValue(true);
       navigate("/feeds");
     } catch (err) {
       console.error("Login error:", err);

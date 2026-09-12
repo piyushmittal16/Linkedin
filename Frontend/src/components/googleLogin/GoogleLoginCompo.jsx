@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-
 import { toast } from "react-toastify";
+import { AuthContext } from "../../context/AuthContext.jsx";
 
 const GoogleLoginCompo = (props) => {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const handleOnSuccess = async (credResponse) => {
     try {
@@ -27,7 +28,9 @@ const GoogleLoginCompo = (props) => {
         localStorage.setItem("token", res.data.token);
         axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
       }
-      localStorage.setItem("userInfo", JSON.stringify(res.data.userExist));
+      if (res.data?.userExist) {
+        login(res.data.userExist);
+      }
       props.changeLoginValue(true);
       navigate("/feeds");
     } catch (err) {
