@@ -43,49 +43,45 @@ exports.addConversation = async (req, res) => {
   }
 };
 
-// Get Conversation (with unreadCount and lastMessage details)
+// Get Conversation with Unread Count & Last Message
 exports.getConversation = async (req, res) => {
   try {
     const ownId = req.user._id;
 
-    const conversations = await ConversationModel.find({
+    const rawConversations = await ConversationModel.find({
       members: { $in: [ownId] },
     })
       .populate("members", "-password")
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .lean();
 
-    // Calculate unreadCount and lastMessage for each conversation
-    const conversationsWithDetails = await Promise.all(
-      conversations.map(async (convo) => {
-        const [lastMsg, unread] = await Promise.all([
-          MessageModal.findOne({ conversation: convo._id })
-            .sort({ createdAt: -1 }),
-          MessageModal.countDocuments({
-            conversation: convo._id,
-            sender: { $ne: ownId },
-            isSeen: false,
-          }),
-        ]);
+    // Attach unreadCount and last message snippet for each conversation
+    const conversations = await Promise.all(
+      rawConversations.map(async (convo) => {
+        const unreadCount = await MessageModal.countDocuments({
+          conversation: convo._id,
+          sender: { $ne: ownId },
+          isSeen: false,
+        });
+
+        const lastMsg = await MessageModal.findOne({
+          conversation: convo._id,
+        })
+          .sort({ createdAt: -1 })
+          .lean();
 
         return {
-          ...convo.toObject(),
-          lastMessage: lastMsg
-            ? lastMsg.message || (lastMsg.picture ? "📷 Photo" : "")
-            : "",
-          lastMessageTime: lastMsg ? lastMsg.createdAt : convo.updatedAt,
-          unreadCount: unread || 0,
+          ...convo,
+          unreadCount: unreadCount || 0,
+          lastMessage: lastMsg?.message || (lastMsg?.picture ? "📷 Photo" : ""),
+          lastMessageTime: lastMsg?.createdAt || convo.updatedAt,
         };
       })
     );
 
-    // Sort by latest message time
-    conversationsWithDetails.sort(
-      (a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
-    );
-
     return res.status(200).json({
       message: "Fetched Successfully",
-      conversations: conversationsWithDetails,
+      conversations,
     });
   } catch (error) {
     console.error("Error in getConversation:", error);

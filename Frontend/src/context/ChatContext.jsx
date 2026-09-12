@@ -28,17 +28,17 @@ export const ChatProvider = ({ children }) => {
         { withCredentials: true }
       );
       const convos = res?.data?.conversations || [];
+      setConversations(convos);
 
-      // Initialize unread counts map from DB
-      const initialMap = {};
+      // Populate unread count map from DB data
+      const initialUnread = {};
       convos.forEach((c) => {
-        if (c._id) {
-          initialMap[c._id] = c.unreadCount || 0;
+        if (c?._id) {
+          initialUnread[c._id] = c.unreadCount || 0;
           socket.emit("joinConversation", c._id);
         }
       });
-      setUnreadMap(initialMap);
-      setConversations(convos);
+      setUnreadMap(initialUnread);
     } catch (err) {
       console.error("Error fetching conversations:", err);
     }
@@ -48,19 +48,19 @@ export const ChatProvider = ({ children }) => {
   const fetchMessages = async (conversationId) => {
     if (!conversationId) return;
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/message/${conversationId}`,
-        { withCredentials: true }
-      );
-      setMessages(res?.data?.message || []);
-
-      // Clear unread indicator for this conversation immediately
+      // Clear unread indicator immediately for this conversation in UI
       setUnreadMap((prev) => ({ ...prev, [conversationId]: 0 }));
       setConversations((prev) =>
         prev.map((c) =>
           c._id === conversationId ? { ...c, unreadCount: 0 } : c
         )
       );
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/message/${conversationId}`,
+        { withCredentials: true }
+      );
+      setMessages(res?.data?.message || []);
 
       // 👁️ Mark messages as seen in DB & notify sender via socket (fire and forget, non-blocking)
       axios
@@ -182,7 +182,7 @@ export const ChatProvider = ({ children }) => {
     // Seen status event: Receiver opened our messages
     const handleConversationSeen = (data) => {
       const convoId = data?.conversationId || data;
-      if (convoId && String(convoId) === String(activeConId)) {
+      if (String(convoId) === String(activeConId)) {
         setMessages((prev) =>
           prev.map((msg) => ({ ...msg, isSeen: true }))
         );

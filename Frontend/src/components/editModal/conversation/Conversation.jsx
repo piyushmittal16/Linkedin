@@ -13,9 +13,9 @@ const Conversation = ({ item, ownData, handleSelectedCon, activeConId }) => {
   }, [ownData, item]);
 
   const unreadCount =
-    (item?._id && unreadMap && unreadMap[item._id] !== undefined)
+    (item?._id && unreadMap && unreadMap[item._id] !== undefined
       ? unreadMap[item._id]
-      : (item?.unreadCount || 0);
+      : item?.unreadCount) || 0;
   const isSelected = activeConId === item?._id;
 
   const handleClickFunc = () => {
@@ -44,11 +44,11 @@ const Conversation = ({ item, ownData, handleSelectedCon, activeConId }) => {
             }}
             className="w-12 h-12 rounded-full object-cover border border-gray-200"
           />
-          {/* 🟢 Green dot for unread messages */}
+          {/* 🟢 Green dot for unread messages or active user */}
           {unreadCount > 0 && (
             <span
-              className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full ring-2 ring-emerald-200"
-              title={`${unreadCount} unread message(s)`}
+              className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"
+              title="New message"
             ></span>
           )}
         </div>
@@ -68,7 +68,7 @@ const Conversation = ({ item, ownData, handleSelectedCon, activeConId }) => {
               {memberData?.f_name || "LinkedIn User"}
             </h4>
             {item?.lastMessageTime && (
-              <span className={`text-[11px] shrink-0 ml-1 ${unreadCount > 0 ? "text-emerald-700 font-semibold" : "text-gray-400"}`}>
+              <span className="text-[11px] text-gray-400 shrink-0 ml-1">
                 {formatMessageTime(item.lastMessageTime)}
               </span>
             )}
@@ -77,7 +77,7 @@ const Conversation = ({ item, ownData, handleSelectedCon, activeConId }) => {
           <p
             className={`text-xs truncate mt-0.5 ${
               unreadCount > 0
-                ? "font-semibold text-gray-900"
+                ? "font-semibold text-gray-800"
                 : "text-gray-500"
             }`}
           >
@@ -86,16 +86,11 @@ const Conversation = ({ item, ownData, handleSelectedCon, activeConId }) => {
         </div>
       </div>
 
-      {/* 🟢 Unread Count Badge */}
+      {/* 🟢 Unread Badge */}
       {unreadCount > 0 && (
-        <div className="flex flex-col items-end justify-center ml-2 shrink-0">
-          <span className="min-w-5.5 h-5.5 px-1.5 flex items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-sm">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-          <span className="text-[9px] text-emerald-700 font-bold tracking-wider uppercase mt-0.5">
-            New
-          </span>
-        </div>
+        <span className="ml-2 min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full bg-emerald-600 text-white text-[11px] font-bold shrink-0 shadow-sm">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
       )}
     </div>
   );

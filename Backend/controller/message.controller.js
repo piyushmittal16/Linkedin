@@ -105,6 +105,18 @@ exports.markAsSeen = async (req, res) => {
         conversationId,
         readerId: currentUserId,
       });
+
+      const convo = await ConversationModel.findById(conversationId);
+      if (convo && convo.members) {
+        convo.members.forEach((mId) => {
+          if (String(mId) !== String(currentUserId)) {
+            req.io.to(String(mId)).emit("conversationSeen", {
+              conversationId,
+              readerId: currentUserId,
+            });
+          }
+        });
+      }
     }
 
     return res.status(200).json({ message: "Messages marked as seen" });

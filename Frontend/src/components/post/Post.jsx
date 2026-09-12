@@ -31,38 +31,30 @@ const Post = ({ profile, item, personalData }) => {
     setNoOfComments(item.comments || 0);
   }, [item, personalData]);
 
-  // ⚡ Real-time comment listener via Socket
+  // ⚡ Listen for Real-Time Comments across all clients
   useEffect(() => {
     if (!item?._id) return;
 
-    const handleCommentAdded = (data) => {
+    const handleRealtimeComment = (data) => {
       if (data && String(data.postId) === String(item._id)) {
-        if (data.newCommentCount !== undefined) {
-          setNoOfComments(data.newCommentCount);
-        } else {
-          setNoOfComments((prev) => prev + 1);
+        if (typeof data.totalComments === "number") {
+          setNoOfComments(data.totalComments);
         }
-
         if (data.comment) {
           setComments((prev) => {
-            const exists = prev.some(
-              (c) => String(c._id) === String(data.comment._id)
-            );
-            if (exists) return prev;
+            // Avoid duplicate if already added optimistically
+            if (prev.some((c) => String(c._id) === String(data.comment._id))) {
+              return prev;
+            }
             return [data.comment, ...prev];
           });
-        }
-
-        if (item) {
-          item.comments = data.newCommentCount || (item.comments || 0) + 1;
         }
       }
     };
 
-    socket.on("postCommentAdded", handleCommentAdded);
-
+    socket.on("newComment", handleRealtimeComment);
     return () => {
-      socket.off("postCommentAdded", handleCommentAdded);
+      socket.off("newComment", handleRealtimeComment);
     };
   }, [item?._id]);
 
@@ -106,59 +98,52 @@ const Post = ({ profile, item, personalData }) => {
     }
   };
 
-  // ✅ Add new comment with instant Optimistic UI update (0ms delay)
+  // ✅ Add new comment with instant Optimistic UI
   const handleSendComment = async (e) => {
     e.preventDefault();
-    const trimmed = commentText.trim();
-    if (trimmed.length === 0)
-      return toast.error("Please enter comment");
+    const text = commentText.trim();
+    if (!text) return toast.error("Please enter comment");
 
-    // 1. Create optimistic comment
-    const tempId = `temp_${Date.now()}`;
-    const optimisticComment = {
-      _id: tempId,
-      comment: trimmed,
+    setCommentText("");
+
+    // Optimistic comment for immediate display (0ms delay)
+    const tempComment = {
+      _id: `temp_${Date.now()}`,
+      comment: text,
       createdAt: new Date().toISOString(),
-      user: {
-        _id: personalData?._id,
-        f_name: personalData?.f_name || "You",
-        headline: personalData?.headline || "",
-        profile_pic: personalData?.profile_pic,
+      user: personalData || {
+        f_name: "You",
+        headline: "",
+        profile_pic: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
       },
     };
 
-    // 2. Immediately update UI
-    setComments((prev) => [optimisticComment, ...prev]);
+    setComments((prev) => [tempComment, ...prev]);
     setNoOfComments((prev) => prev + 1);
-    setCommentText("");
-    if (!commentSection) setCommentSection(true);
-    if (item) item.comments = (item.comments || 0) + 1;
 
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/comments`,
-        { postId: item?._id, comment: trimmed },
+        { postId: item?._id, comment: text },
         { withCredentials: true }
       );
 
       toast.success("Comment added successfully!");
 
-      const savedComment = res.data?.comment;
-      if (savedComment) {
+      const newComment = res.data?.comment;
+      if (newComment) {
         setComments((prev) =>
-          prev.map((c) => (c._id === tempId ? savedComment : c))
+          prev.map((c) => (c._id === tempComment._id ? newComment : c))
         );
-        if (res.data?.newCommentCount !== undefined) {
-          setNoOfComments(res.data.newCommentCount);
-          if (item) item.comments = res.data.newCommentCount;
+        if (typeof res.data.totalComments === "number") {
+          setNoOfComments(res.data.totalComments);
         }
       }
     } catch (error) {
       console.error(error);
-      // Rollback on error
-      setComments((prev) => prev.filter((c) => c._id !== tempId));
+      // Revert optimistic update on failure
+      setComments((prev) => prev.filter((c) => c._id !== tempComment._id));
       setNoOfComments((prev) => Math.max(0, prev - 1));
-      if (item) item.comments = Math.max(0, (item.comments || 1) - 1);
       toast.error("Failed to add comment");
     }
   };

@@ -302,22 +302,14 @@ const Message = () => {
                               <span>{formatMessageTime(item?.createdAt)}</span>
                               {isSelf && (
                                 <span
-                                  className={`font-semibold ml-1.5 flex items-center gap-0.5 text-[11px] ${
-                                    item?.isSeen ? "text-emerald-300" : "text-blue-200"
+                                  className={`font-semibold ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 transition-all ${
+                                    item?.isSeen
+                                      ? "bg-emerald-500 text-white shadow-sm"
+                                      : "bg-blue-400/40 text-blue-100"
                                   }`}
-                                  title={item?.isSeen ? "Seen by recipient" : "Delivered"}
+                                  title={item?.isSeen ? "Seen by recipient" : "Sent / Delivered"}
                                 >
-                                  {item?.isSeen ? (
-                                    <>
-                                      <span className="font-extrabold tracking-tighter text-xs">✓✓</span>
-                                      <span>Seen</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span className="font-bold tracking-tighter text-xs">✓</span>
-                                      <span>Sent</span>
-                                    </>
-                                  )}
+                                  {item?.isSeen ? "✓✓ Seen" : "✓ Sent"}
                                 </span>
                               )}
                             </div>
