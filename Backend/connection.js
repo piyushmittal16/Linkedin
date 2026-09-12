@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
+const dns = require("dns");
 require("dotenv").config();
+
+// Fix DNS querySrv ECONNREFUSED issues on Windows / broadband ISPs
+try {
+  dns.setServers(["8.8.8.8", "8.8.4.4"]);
+} catch (e) {
+  // Ignore if restricted
+}
 
 const connectDB = async () => {
   try {
@@ -16,7 +24,8 @@ const connectDB = async () => {
     const cleanUri = uri.trim().replace(/^["']|["']$/g, "");
 
     await mongoose.connect(cleanUri, {
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 10,
     });
     console.log("✅ MongoDB Connected successfully");
   } catch (error) {

@@ -61,7 +61,6 @@ const Message = () => {
     setActiveConId(id);
     setSelectedConDetails(member);
     setIsMobileChatOpen(true);
-    fetchMessages(id);
   };
 
   useEffect(() => {

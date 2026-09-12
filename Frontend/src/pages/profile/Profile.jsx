@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Advertisement from "../../components/advertisment/Advertisement";
 import Card from "../../components/card/Card";
@@ -14,14 +14,31 @@ import ArrowRightAltSharpIcon from "@mui/icons-material/ArrowRightAltSharp";
 import MessageModal from "../../components/messageModal/MessageModal";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: authUser, logout: authLogout } = useContext(AuthContext);
 
-  const [userData, setUserData] = useState(null);
+  // ⚡ Instant initialization from cache (0ms delay for profile pic & info)
+  const [userData, setUserData] = useState(() => {
+    if (authUser && String(authUser._id) === String(id)) return authUser;
+    try {
+      const saved = JSON.parse(localStorage.getItem("userInfo"));
+      if (saved && String(saved._id) === String(id)) return saved;
+    } catch (e) {}
+    return null;
+  });
   const [postData, setPostData] = useState([]);
-  const [ownData, setOwnData] = useState(null);
+  const [ownData, setOwnData] = useState(() => {
+    if (authUser) return authUser;
+    try {
+      return JSON.parse(localStorage.getItem("userInfo"));
+    } catch (e) {
+      return null;
+    }
+  });
 
   const [imageModal, setImageModal] = useState(false);
   const [circular, setCircular] = useState(true);
@@ -38,7 +55,7 @@ const Profile = () => {
     data: {},
   });
 
-  // Profile data fetch karna
+  // Profile data fetch on load
   useEffect(() => {
     if (id && id !== "undefined") {
       fetchDataOnLoad();
@@ -47,19 +64,32 @@ const Profile = () => {
 
   const fetchDataOnLoad = async () => {
     try {
-      const [userDatas, postDatas, ownDatas] = await Promise.all([
+      // If ownData already exists in context/localStorage, skip fetching /auth/self to save latency!
+      const requests = [
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/user/${id}`),
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/post/getTop5posts/${id}`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
-          withCredentials: true,
-        }),
-      ]);
+      ];
+      if (!ownData) {
+        requests.push(
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/self`, {
+            withCredentials: true,
+          })
+        );
+      }
 
-      setUserData(userDatas?.data?.user || null);
-      setPostData(postDatas?.data?.posts || []);
-      setOwnData(ownDatas?.data?.user || null);
+      const results = await Promise.all(requests);
+      const userDatas = results[0];
+      const postDatas = results[1];
+      const ownDatas = results[2];
 
+      if (userDatas?.data?.user) {
+        setUserData(userDatas.data.user);
+      }
+      if (postDatas?.data?.posts) {
+        setPostData(postDatas.data.posts);
+      }
       if (ownDatas?.data?.user) {
+        setOwnData(ownDatas.data.user);
         localStorage.setItem("userInfo", JSON.stringify(ownDatas.data.user));
       }
     } catch (error) {
@@ -205,18 +235,21 @@ const Profile = () => {
     }
   };
 
-  const handleLogoutBtn = async () => {
+  const handleLogoutBtn = () => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
+      authLogout();
       localStorage.clear();
-      window.location.reload();
+      axios
+        .post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
+          {},
+          { withCredentials: true }
+        )
+        .catch(() => {});
+      navigate("/login");
+      toast.success("Logged out successfully");
     } catch (error) {
       console.log(error);
-      toast.error("Logout failed");
     }
   };
 
@@ -239,18 +272,32 @@ const Profile = () => {
                     </div>
                   )}
                   <img
-                    src={userData?.cover_pic}
+                    src={
+                      userData?.cover_pic ||
+                      "https://img.freepik.com/free-photo/gradient-dark-blue-futuristic-digital-grid-background_53876-129728.jpg"
+                    }
                     className="w-full h-[200px] rounded-tr-lg rounded-tl-lg object-cover"
                     alt="cover"
+                    onError={(e) => {
+                      e.target.src =
+                        "https://img.freepik.com/free-photo/gradient-dark-blue-futuristic-digital-grid-background_53876-129728.jpg";
+                    }}
                   />
                   <div
                     onClick={handleCircularCoverModal}
                     className="absolute object-cover top-24 left-6 z-10"
                   >
                     <img
-                      src={userData?.profile_pic}
-                      className="w-35 h-35 border-2 cursor-pointer border-white rounded-full object-cover"
+                      src={
+                        userData?.profile_pic ||
+                        "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                      }
+                      className="w-35 h-35 border-2 cursor-pointer border-white rounded-full object-cover bg-white"
                       alt="profile"
+                      onError={(e) => {
+                        e.target.src =
+                          "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                      }}
                     />
                   </div>
                 </div>

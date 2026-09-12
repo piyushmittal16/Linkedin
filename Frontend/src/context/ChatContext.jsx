@@ -49,24 +49,57 @@ export const ChatProvider = ({ children }) => {
       );
       setMessages(res?.data?.message || []);
 
-      // Clear unread indicator for this conversation
+      // Clear unread indicator for this conversation immediately
       setUnreadMap((prev) => ({ ...prev, [conversationId]: 0 }));
 
-      // 👁️ Mark messages as seen in DB & notify sender via socket
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/message/seen/${conversationId}`,
-        {},
-        { withCredentials: true }
-      );
+      // 👁️ Mark messages as seen in DB & notify sender via socket (fire and forget, non-blocking)
+      axios
+        .put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/message/seen/${conversationId}`,
+          {},
+          { withCredentials: true }
+        )
+        .catch(() => {});
 
-      socket.emit("conversationSeen", conversationId, user?._id);
+      if (user?._id) {
+        socket.emit("conversationSeen", conversationId, user._id);
+      }
     } catch (err) {
       console.error("Error fetching messages:", err);
     }
   };
 
-  // 📤 Send message
+  // 📤 Send message with instant Optimistic UI update (0ms perceived delay)
   const sendMessage = async (conversationId, messageText, picture, receiverId) => {
+    // 1. Generate optimistic message for instant display
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
+    const optimisticMsg = {
+      _id: tempId,
+      sender: user,
+      conversation: conversationId,
+      message: messageText || "",
+      picture: picture || null,
+      createdAt: new Date().toISOString(),
+      isSeen: false,
+      isPending: true,
+    };
+
+    // 2. Add to messages immediately
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    // 3. Immediately reorder conversation list: Move active conversation to top
+    setConversations((prev) => {
+      const found = prev.find((c) => c._id === conversationId);
+      if (!found) return prev;
+      const updated = {
+        ...found,
+        lastMessage: messageText || (picture ? "📷 Photo" : ""),
+        lastMessageTime: new Date().toISOString(),
+      };
+      const rest = prev.filter((c) => c._id !== conversationId);
+      return [updated, ...rest];
+    });
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/message`,
@@ -78,26 +111,19 @@ export const ChatProvider = ({ children }) => {
         { withCredentials: true }
       );
 
-      const newMsg = res.data;
-      setMessages((prev) => [...prev, newMsg]);
+      const savedMsg = res.data;
 
-      // Emit to conversation room & direct receiver
-      socket.emit("sendMessage", conversationId, newMsg, receiverId);
+      // 4. Replace optimistic message with backend-confirmed message
+      setMessages((prev) =>
+        prev.map((msg) => (msg._id === tempId ? savedMsg : msg))
+      );
 
-      // 🔄 Reorder conversation list: Move active conversation to top
-      setConversations((prev) => {
-        const found = prev.find((c) => c._id === conversationId);
-        if (!found) return prev;
-        const updated = {
-          ...found,
-          lastMessage: messageText || (picture ? "📷 Photo" : ""),
-          lastMessageTime: new Date().toISOString(),
-        };
-        const rest = prev.filter((c) => c._id !== conversationId);
-        return [updated, ...rest];
-      });
+      // 5. Emit to conversation room & direct receiver
+      socket.emit("sendMessage", conversationId, savedMsg, receiverId);
     } catch (err) {
       console.error("Error sending message:", err);
+      // Rollback optimistic message on failure
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
       const errMsg =
         err?.response?.data?.error ||
         "Failed to send message. Please verify you are connected with this user.";
