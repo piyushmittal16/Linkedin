@@ -14,6 +14,8 @@ import { toast } from "react-toastify";
 import socket from "../../../socket.js";
 import { AuthContext } from "../../context/AuthContext";
 import { ChatContext } from "../../context/ChatContext.jsx";
+import { uploadToCloudinary } from "../../utils/cloudinary";
+import { formatMessageTime } from "../../utils/formatTime";
 
 const Message = () => {
   const { user } = useContext(AuthContext);
@@ -28,24 +30,38 @@ const Message = () => {
   } = useContext(ChatContext);
 
   const [selectedConDetails, setSelectedConDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [imageLink, setImageLink] = useState(null);
   const [messageText, setMessageText] = useState("");
-  // Mobile responsive view state: false = show conversation list, true = show chat
+  const [imageLink, setImageLink] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
+  // Auto-scroll to bottom of chat
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  const handleSelectedCon = (id, userData) => {
+  // Set default active conversation on mount
+  useEffect(() => {
+    if (conversations && conversations.length > 0 && !activeConId) {
+      const firstCon = conversations[0];
+      setActiveConId(firstCon._id);
+      const otherMember = firstCon.members?.find((m) => m._id !== user?._id);
+      setSelectedConDetails(otherMember);
+    }
+  }, [conversations]);
+
+  // When conversation selection changes
+  const handleSelectedCon = (id, member) => {
     setActiveConId(id);
-    socket.emit("joinConversation", id);
-    setSelectedConDetails(userData);
+    setSelectedConDetails(member);
+    setIsMobileChatOpen(true);
     fetchMessages(id);
-    setIsMobileChatOpen(true); // Open chat view on mobile
   };
 
   useEffect(() => {
@@ -54,52 +70,31 @@ const Message = () => {
     }
   }, [user]);
 
-  // Auto-select first conversation ONLY on desktop/tablet screens
-  useEffect(() => {
-    if (conversations && conversations.length > 0 && !activeConId && user) {
-      const isDesktop = window.innerWidth >= 768;
-      const firstCon = conversations[0];
-      const otherUser = firstCon?.members?.find((m) => {
-        const mId = typeof m === "object" ? m?._id : m;
-        return mId !== user?._id;
-      });
-      if (isDesktop) {
-        handleSelectedCon(firstCon?._id, otherUser);
-      }
-    }
-  }, [conversations, user]);
-
   useEffect(() => {
     if (activeConId) {
       fetchMessages(activeConId);
     }
   }, [activeConId]);
 
+  // 📷 Cloudinary image upload (safe native fetch, no CORS ERR_FAILED)
   const handleInputImage = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const data = new FormData();
-    data.append("file", files[0]);
-    data.append("upload_preset", "linkedinClone");
-
     setLoading(true);
     try {
-      const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/duwvyiocv/image/upload",
-        data,
-        { withCredentials: false }
-      );
-      setImageLink(response.data.secure_url);
+      const secureUrl = await uploadToCloudinary(files[0]);
+      setImageLink(secureUrl);
       toast.success("Image attached successfully!");
     } catch (error) {
       console.error("Image upload error:", error);
-      toast.error("Failed to upload image.");
+      toast.error(error.message || "Failed to upload image.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ✉️ Send message with connection check
   const handleSendMessageBtn = () => {
     if (!activeConId) {
       toast.error("Please select a conversation first");
@@ -108,7 +103,27 @@ const Message = () => {
     if (!messageText.trim() && !imageLink) {
       return;
     }
-    sendMessage(activeConId, messageText, imageLink);
+
+    // Check if user is connected
+    const isConnected =
+      !selectedConDetails?._id ||
+      user?.friends?.some(
+        (f) => String(f._id || f) === String(selectedConDetails._id)
+      );
+
+    if (!isConnected) {
+      toast.error(
+        `You are no longer connected with ${selectedConDetails?.f_name || "this user"}. Please reconnect to send messages.`
+      );
+      return;
+    }
+
+    sendMessage(
+      activeConId,
+      messageText,
+      imageLink,
+      selectedConDetails?._id
+    );
     setMessageText("");
     setImageLink(null);
   };
@@ -276,6 +291,27 @@ const Message = () => {
                                 />
                               </div>
                             )}
+
+                            {/* 🕒 Timestamp & Seen checkmarks ✓✓ */}
+                            <div
+                              className={`flex items-center gap-1 mt-1 text-[10px] ${
+                                isSelf
+                                  ? "text-blue-100 justify-end"
+                                  : "text-gray-400 justify-start"
+                              }`}
+                            >
+                              <span>{formatMessageTime(item?.createdAt)}</span>
+                              {isSelf && (
+                                <span
+                                  className={`font-bold ml-0.5 tracking-tighter text-xs ${
+                                    item?.isSeen ? "text-cyan-200" : "text-blue-200"
+                                  }`}
+                                  title={item?.isSeen ? "Seen" : "Delivered"}
+                                >
+                                  ✓✓
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -298,6 +334,19 @@ const Message = () => {
                   )}
                   <div ref={messagesEndRef} />
                 </div>
+
+                {/* ⚠️ Disconnected Notice (if users removed friend) */}
+                {selectedConDetails?._id &&
+                  user?.friends &&
+                  !user.friends.some(
+                    (f) => String(f._id || f) === String(selectedConDetails._id)
+                  ) && (
+                    <div className="px-4 py-2.5 bg-amber-50 border-t border-amber-200 text-amber-900 text-xs flex items-center gap-2 shrink-0">
+                      <span>
+                        ⚠️ You are no longer connected with <strong>{selectedConDetails?.f_name}</strong>. Reconnect on their profile to send messages.
+                      </span>
+                    </div>
+                  )}
 
                 {/* Attached Image Preview */}
                 {imageLink && (
@@ -330,16 +379,29 @@ const Message = () => {
                   <div className="relative">
                     <textarea
                       value={messageText}
-                      disabled={!activeConId}
+                      disabled={
+                        !activeConId ||
+                        (selectedConDetails?._id &&
+                          user?.friends &&
+                          !user.friends.some(
+                            (f) => String(f._id || f) === String(selectedConDetails._id)
+                          ))
+                      }
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={handleKeyDown}
                       rows={2}
                       placeholder={
-                        activeConId
+                        selectedConDetails?._id &&
+                        user?.friends &&
+                        !user.friends.some(
+                          (f) => String(f._id || f) === String(selectedConDetails._id)
+                        )
+                          ? "Messaging disabled (Disconnected)"
+                          : activeConId
                           ? "Write a message... (Press Enter to send)"
                           : "Select a conversation first"
                       }
-                      className="w-full bg-gray-100 disabled:bg-gray-50 disabled:cursor-not-allowed outline-none focus:ring-2 focus:ring-blue-500 rounded-xl text-sm p-3 pr-20 resize-none transition-all"
+                      className="w-full bg-gray-100 disabled:bg-gray-100 disabled:cursor-not-allowed outline-none focus:ring-2 focus:ring-blue-500 rounded-xl text-sm p-3 pr-20 resize-none transition-all"
                     ></textarea>
 
                     <div className="absolute right-2 bottom-2.5 flex items-center gap-2">
@@ -366,7 +428,14 @@ const Message = () => {
                       <button
                         onClick={handleSendMessageBtn}
                         disabled={
-                          !activeConId || (!messageText.trim() && !imageLink) || loading
+                          !activeConId ||
+                          (!messageText.trim() && !imageLink) ||
+                          loading ||
+                          (selectedConDetails?._id &&
+                            user?.friends &&
+                            !user.friends.some(
+                              (f) => String(f._id || f) === String(selectedConDetails._id)
+                            ))
                         }
                         className="p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
                         title="Send message"

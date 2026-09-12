@@ -1,4 +1,5 @@
 const PostModel = require("../models/post.js");
+const NotificationModel = require("../models/notification.js");
 
 //Add Post Section
 
@@ -44,11 +45,28 @@ exports.likeDislikePost = async (req, res) => {
     } else {
       //User has not Liked the Post ,add like
       post.likes.push(userId);
+
+      // ✅ Create real-time notification if liking someone else's post
+      if (post.user && !post.user.equals(userId)) {
+        const newNotif = await NotificationModel.create({
+          sender: userId,
+          receiver: post.user,
+          content: `${req.user.f_name || "Someone"} liked your post.`,
+          type: "like",
+          postId: String(post._id),
+        });
+
+        // ⚡ Emit real-time notification to the post owner
+        if (req.io) {
+          const populated = await newNotif.populate("sender");
+          req.io.to(String(post.user)).emit("newNotification", populated);
+        }
+      }
     }
 
     await post.save();
     res.status(200).json({
-      message: index !== -1 ? "Post Unlicked" : "Post Liked",
+      message: index !== -1 ? "Post Unliked" : "Post Liked",
       likes: post.likes,
     });
   } catch (error) {

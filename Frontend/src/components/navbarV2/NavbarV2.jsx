@@ -150,8 +150,8 @@ const NavbarV2 = () => {
               }}
             />
             {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-2 p-[3px] text-xs rounded-full bg-red-600 text-white">
-                {notificationCount}
+              <span className="absolute -top-1.5 -right-2.5 min-w-4.5 h-4.5 px-1 flex items-center justify-center text-[10px] font-bold rounded-full bg-red-600 text-white leading-none shadow-sm aspect-square">
+                {notificationCount > 99 ? "99+" : notificationCount}
               </span>
             )}
           </div>

@@ -100,9 +100,8 @@ const Post = ({ profile, item, personalData }) => {
   // ✅ Copy post URL
   const copyToClipBoard = async () => {
     try {
-      let string = `${import.meta.env.VITE_FRONTEND_URL}/profile/${
-        personalData?._id
-      }/activities/${item?._id}`;
+      const baseUrl = window.location.origin;
+      const string = `${baseUrl}/profile/${personalData?._id}/activities/${item?._id}`;
       await navigator.clipboard.writeText(string);
       toast.success("URL copied successfully");
     } catch (error) {
@@ -148,8 +147,12 @@ const Post = ({ profile, item, personalData }) => {
 
       {/* 🖼️ Post Image */}
       {item?.imageLink && (
-        <div className="w-full h-[300px] object-cover">
-          <img src={item?.imageLink} className="w-full h-full" alt="post" />
+        <div className="w-full max-h-[500px] flex items-center justify-center bg-gray-50 overflow-hidden">
+          <img
+            src={item?.imageLink}
+            className="w-full h-auto max-h-[500px] object-contain"
+            alt="post"
+          />
         </div>
       )}
 

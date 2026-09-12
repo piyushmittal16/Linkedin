@@ -2,6 +2,7 @@ import axios from "axios";
 import { createContext, useState, useEffect, useContext } from "react";
 import socket from "../../socket";
 import { AuthContext } from "./AuthContext.jsx";
+import { toast } from "react-toastify";
 
 export const ChatContext = createContext();
 
@@ -10,57 +11,64 @@ export const ChatProvider = ({ children }) => {
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [activeConId, setActiveConId] = useState(null);
+  const [unreadMap, setUnreadMap] = useState({}); // { [conversationId]: unreadCount }
   const { user } = useContext(AuthContext);
+
   useEffect(() => {
-    if (user) {
+    if (user?._id) {
       fetchConversations();
     }
   }, [user]);
 
+  // 📥 Fetch all conversations for current user
   const fetchConversations = async () => {
-    await axios
-      .get(
+    try {
+      const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/conversation/get-conversation`,
-        {
-          withCredentials: true,
-        }
-      )
-      .then((res) => {
-        setConversations(res?.data?.conversations || []);
-        // setActiveConId(res?.data?.conversations[0]?._id);
-        const convos = res?.data?.conversations || [];
-        setConversations(convos);
+        { withCredentials: true }
+      );
+      const convos = res?.data?.conversations || [];
+      setConversations(convos);
 
-        socket.emit("joinConversation", res?.data?.conversations[0]?._id);
-
-        if (convos.length > 0) {
-          socket.emit("joinConversation", convos[0]?._id);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
+      // Join all conversation rooms for real-time messages
+      convos.forEach((c) => {
+        if (c?._id) socket.emit("joinConversation", c._id);
       });
+    } catch (err) {
+      console.error("Error fetching conversations:", err);
+    }
   };
 
+  // 💬 Fetch messages and mark as seen
   const fetchMessages = async (conversationId) => {
-    await axios
-      .get(
+    if (!conversationId) return;
+    try {
+      const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/message/${conversationId}`,
-        {
-          withCredentials: true,
-        }
-      )
-      .then((res) => {
-        setMessages(res?.data?.message || []);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        { withCredentials: true }
+      );
+      setMessages(res?.data?.message || []);
+
+      // Clear unread indicator for this conversation
+      setUnreadMap((prev) => ({ ...prev, [conversationId]: 0 }));
+
+      // 👁️ Mark messages as seen in DB & notify sender via socket
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/message/seen/${conversationId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      socket.emit("conversationSeen", conversationId, user?._id);
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+    }
   };
 
-  const sendMessage = async (conversationId, messageText, picture) => {
-    await axios
-      .post(
+  // 📤 Send message
+  const sendMessage = async (conversationId, messageText, picture, receiverId) => {
+    try {
+      const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/message`,
         {
           conversation: conversationId,
@@ -68,24 +76,94 @@ export const ChatProvider = ({ children }) => {
           picture,
         },
         { withCredentials: true }
-      )
-      .then((res) => {
-        setMessages((prev) => [...prev, res?.data]);
-        socket.emit("sendMessage", conversationId, res?.data);
-      })
-      .catch((err) => {
-        console.log(err);
+      );
+
+      const newMsg = res.data;
+      setMessages((prev) => [...prev, newMsg]);
+
+      // Emit to conversation room & direct receiver
+      socket.emit("sendMessage", conversationId, newMsg, receiverId);
+
+      // 🔄 Reorder conversation list: Move active conversation to top
+      setConversations((prev) => {
+        const found = prev.find((c) => c._id === conversationId);
+        if (!found) return prev;
+        const updated = {
+          ...found,
+          lastMessage: messageText || (picture ? "📷 Photo" : ""),
+          lastMessageTime: new Date().toISOString(),
+        };
+        const rest = prev.filter((c) => c._id !== conversationId);
+        return [updated, ...rest];
       });
+    } catch (err) {
+      console.error("Error sending message:", err);
+      const errMsg =
+        err?.response?.data?.error ||
+        "Failed to send message. Please verify you are connected with this user.";
+      toast.error(errMsg);
+    }
   };
 
+  // ⚡ Real-time Socket Event Handlers
   useEffect(() => {
-    socket.on("messageReceived", (newMessage) => {
-      setMessages((prev) => [...prev, newMessage]);
-    });
-    return () => {
-      socket.off("messageReceived");
+    // Incoming message in active conversation room
+    const handleMessageReceived = (newMessage) => {
+      if (!newMessage) return;
+      const convoId =
+        typeof newMessage.conversation === "object"
+          ? newMessage.conversation._id
+          : newMessage.conversation;
+
+      if (convoId === activeConId) {
+        setMessages((prev) => [...prev, newMessage]);
+        // Mark seen automatically if chat is open
+        if (user?._id && newMessage.sender?._id !== user._id) {
+          socket.emit("conversationSeen", convoId, user._id);
+        }
+      } else {
+        // Increment unread count (green dot)
+        setUnreadMap((prev) => ({
+          ...prev,
+          [convoId]: (prev[convoId] || 0) + 1,
+        }));
+      }
+
+      // Update conversations list in real-time
+      setConversations((prev) => {
+        const found = prev.find((c) => c._id === convoId);
+        if (!found) return prev;
+        const updated = {
+          ...found,
+          lastMessage: newMessage.message || (newMessage.picture ? "📷 Photo" : ""),
+          lastMessageTime: newMessage.createdAt || new Date().toISOString(),
+        };
+        const rest = prev.filter((c) => c._id !== convoId);
+        return [updated, ...rest];
+      });
     };
-  }, []);
+
+    // Seen status event: Receiver opened our messages
+    const handleConversationSeen = ({ conversationId }) => {
+      if (conversationId === activeConId) {
+        setMessages((prev) =>
+          prev.map((msg) => ({ ...msg, isSeen: true }))
+        );
+      }
+    };
+
+    socket.on("messageReceived", handleMessageReceived);
+    socket.on("newConversationMessage", (data) => {
+      if (data?.message) handleMessageReceived(data.message);
+    });
+    socket.on("conversationSeen", handleConversationSeen);
+
+    return () => {
+      socket.off("messageReceived", handleMessageReceived);
+      socket.off("newConversationMessage");
+      socket.off("conversationSeen", handleConversationSeen);
+    };
+  }, [activeConId, user]);
 
   return (
     <ChatContext.Provider
@@ -101,6 +179,8 @@ export const ChatProvider = ({ children }) => {
         sendMessage,
         activeConId,
         setActiveConId,
+        unreadMap,
+        setUnreadMap,
       }}
     >
       {children}

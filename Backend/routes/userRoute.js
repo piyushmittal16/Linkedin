@@ -6,6 +6,7 @@ const Authentication = require("../authentication/auth.js");
 router.post("/register", UserController.register);
 router.post("/login", UserController.login);
 router.post("/google", UserController.loginThroughGmail);
+router.post("/reset-password", UserController.resetPassword);
 
 router.put("/update", Authentication.auth, UserController.updateUser);
 router.post("/logout", Authentication.auth, UserController.logout);

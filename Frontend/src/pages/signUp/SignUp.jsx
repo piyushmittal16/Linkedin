@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const SignUp = (props) => {
   const navigate = useNavigate();
@@ -10,6 +12,7 @@ const SignUp = (props) => {
     password: "",
     f_name: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = (event, key) => {
@@ -83,14 +86,27 @@ const SignUp = (props) => {
           </div>
           <div>
             <label htmlFor="password">Password</label>
-            <input
-              value={registerField.password}
-              onChange={(e) => handleRegister(e, "password")}
-              type="password"
-              required
-              className="w-full text-xl border-2 rounded-lg px-5 py-1"
-              placeholder="Password"
-            />
+            <div className="relative flex items-center">
+              <input
+                value={registerField.password}
+                onChange={(e) => handleRegister(e, "password")}
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full text-xl border-2 rounded-lg px-5 py-1 pr-11"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+              >
+                {showPassword ? (
+                  <VisibilityOffIcon fontSize="small" />
+                ) : (
+                  <VisibilityIcon fontSize="small" />
+                )}
+              </button>
+            </div>
           </div>
           <div>
             <label htmlFor="f_name">Full Name</label>

@@ -23,9 +23,10 @@ const Profile = () => {
   const [postData, setPostData] = useState([]);
   const [ownData, setOwnData] = useState(null);
 
-  // Modals state
   const [imageModal, setImageModal] = useState(false);
   const [circular, setCircular] = useState(true);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
   const [infoModal, setInfoModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
   const [experienceModal, setExperienceModal] = useState(false);
@@ -76,8 +77,12 @@ const Profile = () => {
   };
 
   const handleCircularCoverModal = () => {
-    setImageModal(true);
-    setCircular(true);
+    if (userData?._id === ownData?._id) {
+      setImageModal(true);
+      setCircular(true);
+    } else {
+      setShowPhotoViewer(true);
+    }
   };
 
   const handleInfoModal = () => {
@@ -152,8 +157,9 @@ const Profile = () => {
 
   const handleSendFriendRequest = async () => {
     const status = checkFriendStatus();
-    if (status === "Request Sent") return;
+    if (status === "Request Sent" || requestLoading) return;
 
+    setRequestLoading(true);
     try {
       if (status === "Connect") {
         const res = await axios.post(
@@ -162,7 +168,7 @@ const Profile = () => {
           { withCredentials: true }
         );
         toast.success(res?.data?.message || "Request Sent");
-        setTimeout(() => window.location.reload(), 1500);
+        await fetchDataOnLoad();
       } else if (status === "Accept Request") {
         const res = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/acceptfriendrequest`,
@@ -170,26 +176,29 @@ const Profile = () => {
           { withCredentials: true }
         );
         toast.success(res?.data?.message || "Request Accepted");
-        setTimeout(() => window.location.reload(), 1500);
+        await fetchDataOnLoad();
       } else if (status === "Disconnect") {
         const res = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/auth/removefromfriendlist/${userData?._id}`,
           { withCredentials: true }
         );
         toast.success(res?.data?.message || "Disconnected");
-        setTimeout(() => window.location.reload(), 1500);
+        await fetchDataOnLoad();
       }
     } catch (error) {
       console.log(`Friend Request Error: ${error}`);
       toast.error(error?.response?.data?.error || "Action failed");
+    } finally {
+      setRequestLoading(false);
     }
   };
 
   const handleShareBtn = async () => {
     try {
-      let string = `${import.meta.env.VITE_FRONTEND_URL}/profile/${id}`;
+      const origin = window.location.origin;
+      const string = `${origin}/profile/${id}`;
       await navigator.clipboard.writeText(string);
-      toast.success("Profile URL Copied!");
+      toast.success("Profile URL copied to clipboard!");
     } catch (error) {
       console.log(error);
       toast.error("Could not copy URL");
@@ -297,12 +306,25 @@ const Profile = () => {
                           </div>
                         )}
                         {userData?._id !== ownData?._id && (
-                          <div
+                          <button
+                            type="button"
                             onClick={handleSendFriendRequest}
-                            className="cursor-pointer p-2 border rounded-lg bg-blue-800 text-white font-semibold hover:bg-blue-900"
+                            disabled={requestLoading || checkFriendStatus() === "Request Sent"}
+                            className={`p-2 px-4 border rounded-lg bg-blue-800 text-white font-semibold flex items-center gap-2 transition-all ${
+                              requestLoading || checkFriendStatus() === "Request Sent"
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:bg-blue-900 cursor-pointer"
+                            }`}
                           >
-                            {checkFriendStatus()}
-                          </div>
+                            {requestLoading ? (
+                              <>
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                <span>Processing...</span>
+                              </>
+                            ) : (
+                              checkFriendStatus()
+                            )}
+                          </button>
                         )}
                       </div>
                     </div>
@@ -447,12 +469,29 @@ const Profile = () => {
 
       {/* Modals */}
       {imageModal && (
-        <Modal title="Upload image" closeModal={handleImageModalOpenClose}>
+        <Modal title={circular ? "Update Profile Picture" : "Update Cover Photo"} closeModal={handleImageModalOpenClose}>
           <ImageModal
             handleEditFunc={handleEditFunc}
             isCircular={circular}
             userData={ownData}
+            closeModal={handleImageModalOpenClose}
           />
+        </Modal>
+      )}
+
+      {/* 👁️ Full photo preview for other user profile */}
+      {showPhotoViewer && (
+        <Modal
+          title={userData?.f_name ? `${userData.f_name}'s Photo` : "Profile Photo"}
+          closeModal={() => setShowPhotoViewer(false)}
+        >
+          <div className="p-6 flex flex-col items-center justify-center">
+            <img
+              src={userData?.profile_pic || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+              alt="Profile"
+              className="w-56 h-56 sm:w-64 sm:h-64 rounded-full object-cover border-4 border-white shadow-2xl bg-gray-100"
+            />
+          </div>
         </Modal>
       )}
 

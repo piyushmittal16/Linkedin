@@ -396,3 +396,35 @@ exports.removeFromFriendList = async (req, res) => {
     });
   }
 };
+
+// Reset Password Controller (simple & interview-friendly)
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: "Email and new password are required" });
+    }
+
+    if (newPassword.trim().length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "No user found with this email address" });
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successfully! Please login with your new password.",
+    });
+  } catch (error) {
+    console.error("Error in resetPassword:", error);
+    res.status(500).json({ error: "Internal Server Error", message: error.message });
+  }
+};
+

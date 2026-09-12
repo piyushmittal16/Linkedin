@@ -64,20 +64,53 @@ const io = new Server(server, {
 
 // Socket.io Events
 io.on("connection", (socket) => {
-  console.log("⚡ User Connected");
+  console.log("⚡ User Connected:", socket.id);
 
-  socket.on("joinConversation", (conversationId) => {
-    console.log(`User Joined Conversation ${conversationId}`);
-    socket.join(conversationId);
+  // User joins their personal room for real-time notifications & direct alerts
+  socket.on("joinUser", (userId) => {
+    if (userId) {
+      socket.join(String(userId));
+      console.log(`👤 User joined personal room: ${userId}`);
+    }
   });
 
-  socket.on("sendMessage", (conId, messageDetail) => {
-    console.log("Message Sent");
-    socket.to(conId).emit("messageReceived", messageDetail);
+  // User joins a specific conversation chat room
+  socket.on("joinConversation", (conversationId) => {
+    if (conversationId) {
+      console.log(`💬 User Joined Conversation ${conversationId}`);
+      socket.join(String(conversationId));
+    }
+  });
+
+  // Broadcast message to room and notify receiver
+  socket.on("sendMessage", (conId, messageDetail, receiverId) => {
+    console.log("Message Sent to conId:", conId);
+    socket.to(String(conId)).emit("messageReceived", messageDetail);
+    if (receiverId) {
+      io.to(String(receiverId)).emit("newConversationMessage", {
+        conversationId: conId,
+        message: messageDetail,
+      });
+    }
+  });
+
+  // Real-time message seen status
+  socket.on("conversationSeen", (conId, readerId) => {
+    socket.to(String(conId)).emit("conversationSeen", {
+      conversationId: conId,
+      readerId,
+    });
+  });
+
+  // Real-time notification trigger
+  socket.on("sendNotification", (receiverId, notification) => {
+    if (receiverId) {
+      io.to(String(receiverId)).emit("newNotification", notification);
+    }
   });
 
   socket.on("disconnect", () => {
-    console.log("❌ User Disconnected");
+    console.log("❌ User Disconnected:", socket.id);
   });
 });
 
@@ -88,6 +121,12 @@ require("./connection");
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Attach socket.io to every request for controller access
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Health check route (important for Render)
 app.get("/", (req, res) => {

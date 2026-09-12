@@ -3,47 +3,44 @@ import ImageIcon from "@mui/icons-material/Image";
 import { toast } from "react-toastify";
 import axios from "axios";
 
+import { uploadToCloudinary } from "../../utils/cloudinary";
+
 const AddModal = (props) => {
   const [desc, setDesc] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
-
-  // cloudinaryName= duwvyiocv
-  // presetName =linkedinClone
+  const [uploading, setUploading] = useState(false);
 
   const handlePost = async () => {
-    if ((desc.trim().length === 0) & !imageUrl)
+    if (desc.trim().length === 0 && !imageUrl)
       return toast.error("Please Enter any field");
-
-    await axios
-      .post(
+    try {
+      await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/post`,
-        { desc: desc, imageLink: imageUrl },
+        { desc, imageLink: imageUrl },
         { withCredentials: true }
-      )
-      .then((res) => {
-        window.location.reload();
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      );
+      toast.success("Post created successfully");
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to create post");
+    }
   };
 
   const handleUploadImage = async (e) => {
     const files = e.target.files;
-    const data = new FormData();
-    data.append("file", files[0]);
+    if (!files || files.length === 0) return;
 
-    data.append("upload_preset", "linkedinClone");
+    setUploading(true);
     try {
-      const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/duwvyiocv/image/upload",
-        data,
-        { withCredentials: false }
-      );
-      const imageUrl = response.data.secure_url;
-      setImageUrl(imageUrl);
+      const url = await uploadToCloudinary(files[0]);
+      setImageUrl(url);
+      toast.success("Image attached!");
     } catch (error) {
-      console.log({ message: "modal uploadImage error", error });
+      console.error("modal uploadImage error", error);
+      toast.error(error.message || "Image upload failed");
+    } finally {
+      setUploading(false);
     }
   };
   return (

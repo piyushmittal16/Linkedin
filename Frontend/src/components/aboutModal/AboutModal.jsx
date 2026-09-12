@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { uploadToCloudinary } from "../../utils/cloudinary";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 
@@ -16,22 +17,15 @@ const AboutModal = ({ handleEditFunc, userData }) => {
   const [loading, setLoading] = useState(false);
   const handleInputImage = async (e) => {
     const files = e.target.files;
-    const data = new FormData();
-    data.append("file", files[0]);
+    if (!files || files.length === 0) return;
 
-    data.append("upload_preset", "linkedinClone");
     setLoading(true);
     try {
-      const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/duwvyiocv/image/upload",
-        data,
-        { withCredentials: false }
-      );
-      const imageUrl = response.data.secure_url;
+      const imageUrl = await uploadToCloudinary(files[0]);
       setData({ ...data, resume: imageUrl });
     } catch (error) {
       console.log({ message: "modal uploadImage error", error });
-      alert("Something Went Wrong");
+      alert(error.message || "Something Went Wrong");
     } finally {
       setLoading(false);
     }
