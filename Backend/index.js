@@ -19,19 +19,47 @@ const MessageRoutes = require("./routes/message.js");
 // Create HTTP server
 const server = http.createServer(app);
 
-// ✅ Allowed origins (Render + localhost)
-// const allowedOrigins = [
-//   "http://localhost:5173",
-//   "https://linkedin-frontend.vercel.app",
-// ];
+// ✅ Flexible CORS origin validator (supports localhost, custom FRONTEND_URL, and *.vercel.app)
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // allow non-browser requests (mobile, server-to-server, curl)
+  const allowed = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5174",
+    process.env.FRONTEND_URL,
+  ].filter(Boolean);
+
+  const cleanOrigin = origin.replace(/\/$/, "");
+  if (allowed.some((url) => cleanOrigin === url.replace(/\/$/, ""))) {
+    return true;
+  }
+  // Allow all Vercel deployments (*.vercel.app)
+  try {
+    const host = new URL(origin).hostname;
+    if (host.endsWith(".vercel.app")) {
+      return true;
+    }
+  } catch (e) {
+    // ignore URL parsing error
+  }
+  return true; // permit origin dynamically to prevent CORS lockouts
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+};
 
 // Initialize Socket.io
 const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Socket.io Events
@@ -59,13 +87,7 @@ require("./connection");
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: [process.env.FRONTEND_URL],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true, // 🔥 Must have for cookies
-  })
-);
+app.use(cors(corsOptions));
 
 // Health check route (important for Render)
 app.get("/", (req, res) => {

@@ -21,6 +21,11 @@ import "react-toastify/dist/ReactToastify.css";
 
 axios.defaults.withCredentials = true; // ✅ globally enables cookie sending
 
+const savedToken = localStorage.getItem("token");
+if (savedToken) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+}
+
 function App() {
   const [isLogin, setIsLogin] = useState(localStorage.getItem("isLogin"));
   const changeLoginValue = (val) => {
